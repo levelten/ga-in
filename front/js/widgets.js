@@ -1,0 +1,1 @@
+jQuery(window).resize(function(){if(typeof gainwp_drawFrontWidgetChart=="function"&&typeof gainwpFrontWidgetData!=="undefined"&&!jQuery.isNumeric(gainwpFrontWidgetData)){gainwp_drawFrontWidgetChart(gainwpFrontWidgetData)}});
