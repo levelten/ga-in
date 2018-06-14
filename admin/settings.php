@@ -1167,7 +1167,7 @@ final class GAINWP_Settings {
                                     <?php foreach ( $options['ga_profiles_list'] as $items ) : ?>
                                       <?php if ( $items[3] ) : ?>
                                         <option value="<?php echo esc_attr( $items[1] ); ?>" <?php selected( $items[1], $options['tableid_jail'] ); ?> title="<?php _e( "View Name:", 'ga-in' ); ?> <?php echo esc_attr( $items[0] ); ?>">
-                                          <?php echo esc_html( $items[2] ); ?> &gt; <?php echo esc_attr( $items[0] ); ?>
+                                          <?php echo esc_html( GAINWP_Tools::strip_protocol( $items[3] ) )?> (<?php echo esc_html( $items[2] )?>) &#8658; <?php echo esc_attr( $items[0] ); ?>
                                         </option>
                                       <?php endif; ?>
                                     <?php endforeach; ?>

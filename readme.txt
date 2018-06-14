@@ -15,7 +15,7 @@ The GAinWP Google Analytics Integration for WordPress plugin easily integrates G
 
 It was created from the excellent Google Analytics Dashboard for WordPress (GADWP) plugin to maintain a robust, direct Google Analytics integration.
 
-In addition to a set of general Google Analytics stats, in-depth Page reports and in-depth Post reports allow further segmentation of your analytics data, providing performance details for each post or page from your website.
+In addition to a set of general Google Analytics stats, in-depth page reports and in-depth post reports allow further segmentation of your analytics data, providing performance details for each post or page from your website.
 
 The Google Analytics tracking code is fully customizable through options and hooks, allowing advanced data collection like custom dimensions and events.    
 
@@ -112,8 +112,8 @@ This plugin is fully compatible with multisite network installs, allowing three 
 - Mode 2: network activated using a single Google Analytics account
 - Mode 3: network deactivated using multiple Google Analytics accounts
 
-> <strong>Google Analytics IN for WP on GitHub</strong><br>
-> You can submit feature requests or bugs on [Google Analytics IN for WordPress](https://github.com/levelten/google-analytics-in) repository.
+> <strong>GAinWP on GitHub</strong><br>
+> You can submit feature requests or bugs on [GAinWP](https://github.com/levelten/ga-in) repository.
 
 == Why this Plugin ==
 
@@ -148,21 +148,29 @@ We are constantly improving GAinWP, sometimes the video tutorial may be a little
 
 = How can I suggest a new feature, contribute or report a bug? =
 
-You can submit pull requests, feature requests and bug reports on [our GitHub repository](https://github.com/levelten/google-analytics-in).
+You can submit pull requests, feature requests and bug reports on [our GitHub repository](https://github.com/levelten/ga-in).
 
 = Documentation, Tutorials and FAQ =
 
-For documentation, tutorials, FAQ and videos check out: [Google Analytics IN for WP documentation](https://intelligencewp.com/google-analytics-in-wordpress/).
+For documentation, tutorials, FAQ and videos check out: [GAinWP documentation](https://intelligencewp.com/google-analytics-in-wordpress/).
 
 == Screenshots ==
 
+1. Google Analytics Dashboard Sessions Report
+2. Google Analytics Dashboard Real-Time Report
+3. Google Analytics Posts/Pages Report
+4. Google Analytics Dashboard Geo Map Report
+5. Google Analytics Dashboard Pages Report
+6. Google Analytics Dashboard Traffic Details Report
+7. Google Analytics Frontend Report overlay
+
 == Localization ==
 
-You can translate Google Analytics IN for WP on [translate.wordpress.org](https://translate.wordpress.org/projects/wp-plugins/ga-in).
+You can translate GAinWP on [translate.wordpress.org](https://translate.wordpress.org/projects/wp-plugins/ga-in).
 
 == License ==
 
-Google Analytics IN for WP it's released under the GPLv2, you can use it free of charge on your personal or commercial website.
+GAinWP it's released under the GPLv2, you can use it free of charge on your personal or commercial website.
 
 == Upgrade Notice ==
 
