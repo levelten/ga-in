@@ -158,11 +158,12 @@ For documentation, tutorials, FAQ and videos check out: [GAinWP documentation](h
 
 1. Google Analytics Dashboard Sessions Report
 2. Google Analytics Dashboard Real-Time Report
-3. Google Analytics Posts/Pages Report
+3. Google Analytics Posts/Pages Admin Report Overlay
 4. Google Analytics Dashboard Geo Map Report
 5. Google Analytics Dashboard Pages Report
 6. Google Analytics Dashboard Traffic Details Report
-7. Google Analytics Frontend Report overlay
+7. Google Analytics Frontend Report Overlay
+8. Google Analytics Frontend Widget
 
 == Localization ==
 
