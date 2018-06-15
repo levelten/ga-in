@@ -129,12 +129,34 @@ This plugin was originally created by [Alin Marcu](https://deconf.com) as the Go
 
 == Installation ==
 
+The Standard Installation enables both tracking and reporting for your site. If you already have tracking you want to keep, see Reporting Only Installation below. If you only want track your site in Google Analytics and not connect to reporting data, see Tracking Only Installation below.
+
+=== Standard Installation ===
+
 1. Upload the full ga-in directory into your wp-content/plugins directory.
 2. In WordPress select Plugins from your sidebar menu and activate the GAINWP - Google Analytics Integration for WordPress plugin.
-3. Open the plugin configuration page, which is located under Google Analytics menu.
-4. Authorize the plugin to connect to Google Analytics using the Authorize Plugin button.
-5. Go back to the plugin configuration page, which is located under Google Analytics menu to update/set your settings.
-6. Go to Google Analytics -> Tracking Code to configure/enable/disable tracking.
+3. Open the plugin General Settings page, which is located under Google Analytics menu.
+4. Make sure Setup Mode is set to "Tracking & Reporting" (default).
+5. Click the Authorize Plugin button.
+6. Click the red Get Access Code link to open a new browser tab/window and follow the steps to generate the code.
+5. Back on your WordPress browser tab/window, copy and paste the access code into the Access Code input field.
+6. Click Save Access Code button.
+7. After the save, select the Tracking ID / View for your site.
+8. Click the Save Changes button.
+
+=== Reporting Only Installation ===
+
+1. Complete steps 1-3 from the Standard Installation.
+4. Set Setup Mode to "Reporting only".
+5. Click Save Changes.
+6. Complete steps 5-8 from the Standard Installation.
+
+=== Tracking Only Installation ===
+
+1. Follow setups 1-3 of the Standard Installation.
+4. Set Setup Mode to "Tracking only".
+5. Copy and paste your Tracking ID from Google Analytics into the Tracking ID input.
+6. Click Save Changes.
 
 == Frequently Asked Questions == 
 
