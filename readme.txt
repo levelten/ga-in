@@ -13,7 +13,9 @@ Connects Google Analytics with your WordPress site.
 == Description ==
 The GAinWP Google Analytics Integration for WordPress plugin easily integrates Google Analytics tracking and dashboard reporting into your website in just minutes.
 
-It was created from the excellent Google Analytics Dashboard for WordPress (GADWP) plugin to maintain a robust, direct Google Analytics integration.
+It was created from the excellent Google Analytics Dashboard for WordPress (GADWP) plugin to maintain a simple, direct Google Analytics integration for those concerned about data privacy.
+
+https://youtu.be/aEr9B4wm4Po
 
 In addition to a set of general Google Analytics stats, in-depth page reports and in-depth post reports allow further segmentation of your analytics data, providing performance details for each post or page from your website.
 
@@ -119,9 +121,11 @@ This plugin is fully compatible with multisite network installs, allowing three 
 
 The [IntelligenceWP](https://wordpress.org/plugins/intelligence) project leverages the GADWP plugin for core Google Analytics integrations.
 
-After the Google Analytics Dashboard for WordPress changed maintainers, users expressed concern over the new auth process proving 3rd party access to Google API keys and analytics data.
+After the Google Analytics Dashboard for WordPress changed maintainers in April 2018, users expressed concern over the new auth process proving 3rd party access to Google API keys and analytics data.
 
-GAinWP uses a direct auth process where API keys only reside in your WordPress site so data access is not shared with any 3rd parties.
+GAinWP implements a direct auth process where API keys only reside in your WordPress site eliminating 3rd party access.
+
+The long term goal of the project is to provide an open, standards based Google Analytics WordPress API to facilitate integration of Google Analytics data by other plugins and themes into WordPress.
 
 == Credits ==
 
