@@ -954,7 +954,28 @@ final class GAINWP_Settings {
 			$gainwp->gapi_controller = new GAINWP_GAPI_Controller();
 		}
 		echo '<script type="text/javascript">jQuery("#gapi-warning").hide()</script>';
+// TEMP TESTING
+/*
+$token = json_decode($gainwp->config->options['token'], 1);
+intel_d($token);
+intel_d(time());
+intel_d(time() - $token['created']);
 
+if ( $gainwp->config->options['token'] && $gainwp->gapi_controller->client->getAccessToken() ) {
+  $profiles = $gainwp->gapi_controller->refresh_profiles();
+intel_d($profiles);
+  if ( is_array ( $profiles ) && ! empty( $profiles ) ) {
+    $gainwp->config->options['ga_profiles_list'] = $profiles;
+    if ( ! $gainwp->config->options['tableid_jail'] ) {
+      $profile = GAINWP_Tools::guess_default_domain( $profiles );
+      $gainwp->config->options['tableid_jail'] = $profile;
+    }
+    $gainwp->config->set_plugin_options();
+    $options = self::update_options( 'general' );
+  }
+}
+*/
+// END TEMP TESTING
 		if ( isset( $_POST['gainwp_access_code'] ) ) {
 			if ( 1 == ! stripos( 'x' . $_POST['gainwp_access_code'], 'UA-', 1 ) && $_POST['gainwp_access_code'] != get_option( 'gainwp_redeemed_code' ) ) {
 				try {

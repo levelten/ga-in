@@ -27,7 +27,6 @@ if ( ! class_exists( 'GAINWP_GAPI_Controller' ) ) {
 
 		public function __construct() {
 			$this->gainwp = GAINWP();
-
 			include_once ( GAINWP_DIR . 'tools/src/Deconfin/autoload.php' );
 			$config = new Deconfin_Config();
 			$config->setCacheClass( 'Deconfin_Cache_Null' );
@@ -39,22 +38,18 @@ if ( ! class_exists( 'GAINWP_GAPI_Controller' ) ) {
 				} else {
 					$rightversion = false;
 				}
-
 				if ( $rightversion && defined( 'GAINWP_IP_VERSION' ) && GAINWP_IP_VERSION ) {
 					$curl_options[CURLOPT_IPRESOLVE] = GAINWP_IP_VERSION; // Force CURL_IPRESOLVE_V4 or CURL_IPRESOLVE_V6
 				}
-
 				// add Proxy server settings to curl, if defined
 				if ( defined( 'WP_PROXY_HOST' ) && defined( 'WP_PROXY_PORT' ) ) {
 					$curl_options[CURLOPT_PROXY] = WP_PROXY_HOST;
 					$curl_options[CURLOPT_PROXYPORT] = WP_PROXY_PORT;
 				}
-
 				if ( defined( 'WP_PROXY_USERNAME' ) && defined( 'WP_PROXY_PASSWORD' ) ) {
 					$curl_options[CURLOPT_HTTPAUTH] = CURLAUTH_BASIC;
 					$curl_options[CURLOPT_PROXYUSERPWD] = WP_PROXY_USERNAME . ':' . WP_PROXY_PASSWORD;
 				}
-
 				$curl_options = apply_filters( 'gainwp_curl_options', $curl_options );
 				if ( ! empty( $curl_options ) ) {
 					$config->setClassConfig( 'Deconfin_IO_Curl', 'options', $curl_options );
@@ -66,14 +61,34 @@ if ( ! class_exists( 'GAINWP_GAPI_Controller' ) ) {
 			$this->client->setApplicationName( 'GAINWP ' . GAINWP_CURRENT_VERSION );
 			$this->client->setRedirectUri( 'urn:ietf:wg:oauth:2.0:oob' );
 			$this->managequota = 'u' . get_current_user_id() . 's' . get_current_blog_id();
-			$this->access = array_map( array( $this, 'map' ), $this->access );
-			if ( $this->gainwp->config->options['user_api'] ) {
-				$this->client->setClientId( $this->gainwp->config->options['client_id'] );
-				$this->client->setClientSecret( $this->gainwp->config->options['client_secret'] );
-			} else {
-				$this->client->setClientId( $this->access[0] );
-				$this->client->setClientSecret( $this->access[1] );
+
+			$this->client = apply_filters('gainwp_gapi_client_alter', $this->client);
+
+			$auth_class = $this->client->getAuthClass();
+			$auth_config = $this->client->getClassConfig($auth_class);
+
+			$access = array(
+				'client_id' => '',
+				'client_secret'=> '',
+				'token' => '',
+			);
+
+			list($access['client_id'], $access['client_secret']) = array_map( array( $this, 'map' ), $this->access );
+
+			if (!empty($auth_config['client_id'])) {
+				$access['client_id'] = $auth_config['client_id'];
 			}
+			if (!empty($auth_config['client_secret'])) {
+				$access['client_secret'] = $auth_config['client_secret'];
+			}
+
+			if ( $this->gainwp->config->options['user_api'] ) {
+				$access['client_id'] = $this->gainwp->config->options['client_id'];
+				$access['client_secret'] = $this->gainwp->config->options['client_secret'];
+			}
+
+			$this->client->setClientId( $access['client_id'] );
+			$this->client->setClientSecret( $access['client_secret'] );
 
 			/**
 			 * GAINWP Endpoint support
@@ -81,13 +96,16 @@ if ( ! class_exists( 'GAINWP_GAPI_Controller' ) ) {
 			add_action( 'gainwp_endpoint_support', array( $this, 'add_endpoint_support' ) );
 
 			$this->service = new Deconfin_Service_Analytics( $this->client );
+
 			if ( $this->gainwp->config->options['token'] ) {
 				$token = $this->gainwp->config->options['token'];
 				if ( $token ) {
 					try {
 						$this->client->setAccessToken( $token );
 						if ( $this->client->isAccessTokenExpired() ) {
+							// returns refresh token string
 							$refreshtoken = $this->client->getRefreshToken();
+							// refreshes access_token on client
 							$this->client->refreshToken( $refreshtoken );
 						}
 						$this->gainwp->config->options['token'] = $this->client->getAccessToken();

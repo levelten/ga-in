@@ -219,12 +219,30 @@ class Deconfin_Client
   }
 
 
-
   /**
    * Set the authenticator object
    * @param Deconfin_Auth_Abstract $auth
    */
   public function setAuth(Deconfin_Auth_Abstract $auth)
+  {
+    $this->config->setAuthClass(get_class($auth));
+    $this->auth = $auth;
+  }
+
+  /**
+   * Set the authenticator object
+   * @param Deconfin_Auth_Abstract $auth
+   */
+  public function getAuthClass()
+  {
+    return $this->config->getAuthClass();
+  }
+
+  /**
+   * Set the authenticator object
+   * @param Deconfin_Auth_Abstract $auth
+   */
+  public function setAuthClass(Deconfin_Auth_Abstract $auth)
   {
     $this->config->setAuthClass(get_class($auth));
     $this->auth = $auth;

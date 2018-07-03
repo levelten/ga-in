@@ -154,6 +154,9 @@ class Deconfin_Config
         $this->configuration = $merged_configuration;
       }
     }
+
+    // enable plugins to alter config
+    $this->configuration = apply_filters('gainwp_gapi_client_config_alter', $this->configuration);
   }
 
   /**

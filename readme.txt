@@ -1,9 +1,9 @@
 === GAinWP Google Analytics Integration for WordPress ===
-Contributors: tomdude,deconf
+Contributors: tomdude
 Tags: analytics,google analytics,google analytics code,google analytics dashboard,google analytics plugin,google analytics tracking code,google analytics widget,gtag
 Requires at least: 3.5
 Tested up to: 4.9.6
-Stable tag: 5.4.0
+Stable tag: 5.4.1.0-dev
 Requires PHP: 5.2.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -15,7 +15,7 @@ The GAinWP Google Analytics Integration for WordPress plugin easily integrates G
 
 It was created from the excellent Google Analytics Dashboard for WordPress (GADWP) plugin to maintain a simple, direct Google Analytics integration for those concerned about data privacy.
 
-https://youtu.be/aEr9B4wm4Po
+https://www.youtube.com/watch?v=aEr9B4wm4Po&rel=0
 
 In addition to a set of general Google Analytics stats, in-depth page reports and in-depth post reports allow further segmentation of your analytics data, providing performance details for each post or page from your website.
 

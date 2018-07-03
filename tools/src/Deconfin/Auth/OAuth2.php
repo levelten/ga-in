@@ -35,22 +35,22 @@ class Deconfin_Auth_OAuth2 extends Deconfin_Auth_Abstract
   const OAUTH2_ISSUER_HTTPS = 'https://accounts.google.com';
 
   /** @var Deconfin_Auth_AssertionCredentials $assertionCredentials */
-  private $assertionCredentials;
+  protected $assertionCredentials;
 
   /**
    * @var string The state parameters for CSRF and other forgery protection.
    */
-  private $state;
+  protected $state;
 
   /**
    * @var array The token bundle.
    */
-  private $token = array();
+  protected $token = array();
 
   /**
    * @var Deconfin_Client the base client
    */
-  private $client;
+  protected $client;
 
   /**
    * Instantiates the class, but does not initiate the login flow, leaving it
@@ -354,7 +354,6 @@ class Deconfin_Auth_OAuth2 extends Deconfin_Auth_Abstract
       if (! isset($token['access_token']) || ! isset($token['expires_in'])) {
         throw new Deconfin_Auth_Exception("Invalid token format");
       }
-
       if (isset($token['id_token'])) {
         $this->token['id_token'] = $token['id_token'];
       }
