@@ -2,7 +2,7 @@
 Contributors: tomdude
 Tags: analytics,google analytics,google analytics code,google analytics dashboard,google analytics plugin,google analytics tracking code,google analytics widget,gtag
 Requires at least: 3.5
-Tested up to: 4.9.6
+Tested up to: 5.0
 Stable tag: 5.4.1
 Requires PHP: 5.2.4
 License: GPLv2 or later
