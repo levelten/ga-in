@@ -3,7 +3,7 @@ Contributors: tomdude
 Tags: analytics,google analytics,google analytics code,google analytics dashboard,google analytics plugin,google analytics tracking code,google analytics widget,gtag
 Requires at least: 3.5
 Tested up to: 5.0
-Stable tag: 5.4.2
+Stable tag: 5.4.3
 Requires PHP: 5.2.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -202,6 +202,9 @@ GAinWP it's released under the GPLv2, you can use it free of charge on your pers
 == Upgrade Notice ==
 
 == Changelog ==
+
+= 5.4.3 =
+* Verified support for WP 5.2
 
 = 5.4 =
 * Enable direct Google API auth process to prevent access keys and Google Analytics data sharing with 3rd parties
