@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) )
 
 // Plugin Version
 if ( ! defined( 'GAINWP_CURRENT_VERSION' ) ) {
-	define( 'GAINWP_CURRENT_VERSION', '5.4.4-dev' );
+	define( 'GAINWP_CURRENT_VERSION', '5.4.4' );
 }
 
 if ( ! defined( 'GAINWP_ENDPOINT_URL' ) ) {
