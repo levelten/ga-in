@@ -62,43 +62,46 @@ if ( ! class_exists( 'GAINWP_Config' ) ) {
 		// Validates data before storing
 		private function validate_data( $options ) {
 			/* @formatter:off */
-			$numerics = array( 	'ga_realtime_pages',
-								'ga_enhanced_links',
-								'ga_crossdomain_tracking',
-								'ga_author_dimindex',
-								'ga_category_dimindex',
-								'ga_tag_dimindex',
-								'ga_user_dimindex',
-								'ga_pubyear_dimindex',
-								'ga_pubyearmonth_dimindex',
-								'tm_author_var',
-								'tm_category_var',
-								'tm_tag_var',
-								'tm_user_var',
-								'tm_pubyear_var',
-								'tm_pubyearmonth_var',
-								'ga_aff_tracking',
-								'amp_tracking_analytics',
-								'amp_tracking_clientidapi',
-								'amp_tracking_tagmanager',
-								'optimize_tracking',
-								'optimize_pagehiding',
-								'trackingcode_infooter',
-								'trackingevents_infooter',
-								'ga_formsubmit_tracking',
-								'superadmin_tracking',
-								'ga_pagescrolldepth_tracking',
-								'tm_pagescrolldepth_tracking',
-								'ga_speed_samplerate',
-								'ga_user_samplerate',
-								'ga_event_precision',
-								'with_endpoint',
-								'backend_realtime_report',
-								'ga_optout',
-								'ga_dnt_optout',
-								'tm_optout',
-								'tm_dnt_optout',
-								'ga_with_gtag',
+			$numerics = array(
+			  'ga_realtime_pages',
+        'ga_enhanced_links',
+        'ga_crossdomain_tracking',
+        'ga_author_dimindex',
+        'ga_author_login_dimindex',
+        'ga_category_dimindex',
+        'ga_tag_dimindex',
+        'ga_user_dimindex',
+        'ga_pubyear_dimindex',
+        'ga_pubyearmonth_dimindex',
+        'tm_author_var',
+        'tm_author_login_var',
+        'tm_category_var',
+        'tm_tag_var',
+        'tm_user_var',
+        'tm_pubyear_var',
+        'tm_pubyearmonth_var',
+        'ga_aff_tracking',
+        'amp_tracking_analytics',
+        'amp_tracking_clientidapi',
+        'amp_tracking_tagmanager',
+        'optimize_tracking',
+        'optimize_pagehiding',
+        'trackingcode_infooter',
+        'trackingevents_infooter',
+        'ga_formsubmit_tracking',
+        'superadmin_tracking',
+        'ga_pagescrolldepth_tracking',
+        'tm_pagescrolldepth_tracking',
+        'ga_speed_samplerate',
+        'ga_user_samplerate',
+        'ga_event_precision',
+        'with_endpoint',
+        'backend_realtime_report',
+        'ga_optout',
+        'ga_dnt_optout',
+        'tm_optout',
+        'tm_dnt_optout',
+        'ga_with_gtag',
 			);
 			foreach ( $numerics as $key ) {
 				if ( isset( $options[$key] ) ) {
@@ -255,48 +258,50 @@ if ( ! class_exists( 'GAINWP_Config' ) ) {
 
 			/* @formatter:off */
 			$zeros = array( 	'ga_enhanced_links',
-								'network_mode',
-								'ga_enhanced_excludesa',
-								'ga_remarketing',
-								'ga_event_bouncerate',
-								'ga_author_dimindex',
-								'ga_tag_dimindex',
-								'ga_category_dimindex',
-								'ga_user_dimindex',
-								'ga_pubyear_dimindex',
-								'ga_pubyearmonth_dimindex',
-								'tm_author_var', // v5.0
-								'tm_category_var', // v5.0
-								'tm_tag_var', // v5.0
-								'tm_user_var', // v5.0
-								'tm_pubyear_var', // v5.0
-								'tm_pubyearmonth_var', // v5.0
-								'ga_crossdomain_tracking',
-								'api_backoff',  // v4.8.1.3
-								'ga_aff_tracking',
-								'ga_hash_tracking',
-								'switch_profile', // V4.7
-								'amp_tracking_analytics', //v5.0
-								'amp_tracking_clientidapi', //v5.1.2
-								'optimize_tracking', //v5.0
-								'optimize_pagehiding', //v5.0
-								'amp_tracking_tagmanager', //v5.0
-								'trackingcode_infooter', //v5.0
-								'trackingevents_infooter', //v5.0
-								'ga_formsubmit_tracking', //v5.0
-								'superadmin_tracking', //v5.0
-								'ga_pagescrolldepth_tracking', //v5.0
-								'tm_pagescrolldepth_tracking', //v5.0
-								'ga_event_precision', //v5.1.1.1
-								'ga_force_ssl', //v5.1.2
-								'with_endpoint', //v5.2
-								'backend_realtime_report', //v5.2
-								'ga_optout', //v5.2.3
-								'ga_dnt_optout', //v5.2.3
-								'ga_with_gtag', //v5.3
-								'frontend_item_reports',
-								'tm_optout', //v5.3.1.2
-								'tm_dnt_optout', //v5.3.1.2
+        'network_mode',
+        'ga_enhanced_excludesa',
+        'ga_remarketing',
+        'ga_event_bouncerate',
+        'ga_author_dimindex',
+        'ga_author_login_dimindex',
+        'ga_tag_dimindex',
+        'ga_category_dimindex',
+        'ga_user_dimindex',
+        'ga_pubyear_dimindex',
+        'ga_pubyearmonth_dimindex',
+        'tm_author_var', // v5.0
+        'tm_author_login_var', // v5.4.5
+        'tm_category_var', // v5.0
+        'tm_tag_var', // v5.0
+        'tm_user_var', // v5.0
+        'tm_pubyear_var', // v5.0
+        'tm_pubyearmonth_var', // v5.0
+        'ga_crossdomain_tracking',
+        'api_backoff',  // v4.8.1.3
+        'ga_aff_tracking',
+        'ga_hash_tracking',
+        'switch_profile', // V4.7
+        'amp_tracking_analytics', //v5.0
+        'amp_tracking_clientidapi', //v5.1.2
+        'optimize_tracking', //v5.0
+        'optimize_pagehiding', //v5.0
+        'amp_tracking_tagmanager', //v5.0
+        'trackingcode_infooter', //v5.0
+        'trackingevents_infooter', //v5.0
+        'ga_formsubmit_tracking', //v5.0
+        'superadmin_tracking', //v5.0
+        'ga_pagescrolldepth_tracking', //v5.0
+        'tm_pagescrolldepth_tracking', //v5.0
+        'ga_event_precision', //v5.1.1.1
+        'ga_force_ssl', //v5.1.2
+        'with_endpoint', //v5.2
+        'backend_realtime_report', //v5.2
+        'ga_optout', //v5.2.3
+        'ga_dnt_optout', //v5.2.3
+        'ga_with_gtag', //v5.3
+        'frontend_item_reports',
+        'tm_optout', //v5.3.1.2
+        'tm_dnt_optout', //v5.3.1.2
 			);
 			foreach ( $zeros as $key ) {
 				if ( ! isset( $this->options[$key] ) ) {

@@ -42,6 +42,7 @@ class GAINWP_Install {
 			$options['ga_crossdomain_tracking'] = 0;
 			$options['ga_crossdomain_list'] = '';
 			$options['ga_author_dimindex'] = 0;
+      $options['ga_author_login_dimindex'] = 0;
 			$options['ga_category_dimindex'] = 0;
 			$options['ga_tag_dimindex'] = 0;
 			$options['ga_user_dimindex'] = 0;
@@ -61,6 +62,7 @@ class GAINWP_Install {
 			$options['pagetitle_404'] = 'Page Not Found';
 			$options['maps_api_key'] = '';
 			$options['tm_author_var'] = 0;
+      $options['tm_author_login_var'] = 0;
 			$options['tm_category_var'] = 0;
 			$options['tm_tag_var'] = 0;
 			$options['tm_user_var'] = 0;
@@ -116,6 +118,7 @@ class GAINWP_Install {
 			$options['ga_crossdomain_tracking'] = 0;
 			$options['ga_crossdomain_list'] = '';
 			$options['ga_author_dimindex'] = 0;
+      $options['ga_author_login_dimindex'] = 0;
 			$options['ga_category_dimindex'] = 0;
 			$options['ga_tag_dimindex'] = 0;
 			$options['ga_user_dimindex'] = 0;
@@ -134,6 +137,7 @@ class GAINWP_Install {
 			$options['pagetitle_404'] = 'Page Not Found';
 			$options['maps_api_key'] = '';
 			$options['tm_author_var'] = 0;
+      $options['tm_author_login_var'] = 0;
 			$options['tm_category_var'] = 0;
 			$options['tm_tag_var'] = 0;
 			$options['tm_user_var'] = 0;

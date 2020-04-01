@@ -45,6 +45,14 @@ if ( ! class_exists( 'GAINWP_Tracking_Analytics_Base' ) ) {
 				$custom_dimensions[$index] = esc_attr( $author_name );
 			}
 
+      if ( $this->gainwp->config->options['ga_author_login_dimindex'] && ( is_single() || is_page() ) ) {
+        global $post;
+        $author_id = $post->post_author;
+        $author_name = get_the_author_meta( 'user_login', $author_id );
+        $index = (int) $this->gainwp->config->options['ga_author_login_dimindex'];
+        $custom_dimensions[$index] = esc_attr( $author_name );
+      }
+
 			if ( $this->gainwp->config->options['ga_pubyear_dimindex'] && is_single() ) {
 				global $post;
 				$date = get_the_date( 'Y', $post->ID );

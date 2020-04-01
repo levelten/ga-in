@@ -74,6 +74,12 @@ if ( ! class_exists( 'GAINWP_Tracking_TagManager' ) ) {
 				$author_name = get_the_author_meta( 'display_name', $author_id );
 				$this->add_var( 'gainwpAuthor', esc_attr( $author_name ) );
 			}
+      else if ( $this->gainwp->config->options['tm_author_login_var'] && ( is_single() || is_page() ) ) {
+        global $post;
+        $author_id = $post->post_author;
+        $author_name = get_the_author_meta( 'user_login', $author_id );
+        $this->add_var( 'gainwpAuthor', esc_attr( $author_name ) );
+      }
 
 			if ( $this->gainwp->config->options['tm_pubyear_var'] && is_single() ) {
 				global $post;

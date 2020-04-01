@@ -340,13 +340,26 @@ final class GAINWP_Settings {
 								</tr>
 								<tr>
 									<td class="gainwp-settings-title">
-										<label for="ga_author_dimindex"><?php _e("Authors:", 'ga-in' ); ?>
+										<label for="ga_author_dimindex"><?php _e("Authors (display name):", 'ga-in' ); ?>
 										</label>
 									</td>
 									<td>
 										<select id="ga_author_dimindex" name="options[ga_author_dimindex]">
 										<?php for ($i=0;$i<21;$i++) : ?>
 											<option value="<?php echo $i;?>" <?php selected( $options['ga_author_dimindex'], $i ); ?>><?php echo 0 == $i ?'Disabled':'dimension '.$i; ?></option>
+										<?php endfor; ?>
+										</select>
+									</td>
+								</tr>
+								<tr>
+									<td class="gainwp-settings-title">
+										<label for="ga_author_dimindex"><?php _e("Authors (user login):", 'ga-in' ); ?>
+										</label>
+									</td>
+									<td>
+										<select id="ga_author_dimindex" name="options[ga_author_login_dimindex]">
+										<?php for ($i=0;$i<21;$i++) : ?>
+											<option value="<?php echo $i;?>" <?php selected( $options['ga_author_login_dimindex'], $i ); ?>><?php echo 0 == $i ?'Disabled':'dimension '.$i; ?></option>
 										<?php endfor; ?>
 										</select>
 									</td>
@@ -425,13 +438,25 @@ final class GAINWP_Settings {
 								</tr>
 								<tr>
 									<td class="gainwp-settings-title">
-										<label for="tm_author_var"><?php _e("Authors:", 'ga-in' ); ?>
+										<label for="tm_author_var"><?php _e("Authors (display name):", 'ga-in' ); ?>
 										</label>
 									</td>
 									<td>
 										<select id="tm_author_var" name="options[tm_author_var]">
 											<option value="1" <?php selected( $options['tm_author_var'], 1 ); ?>>gainwpAuthor</option>
 											<option value="0" <?php selected( $options['tm_author_var'], 0 ); ?>><?php _e( "Disabled", 'ga-in' ); ?></option>
+										</select>
+									</td>
+								</tr>
+								<tr>
+									<td class="gainwp-settings-title">
+										<label for="tm_author_var"><?php _e("Authors (user login):", 'ga-in' ); ?>
+										</label>
+									</td>
+									<td>
+										<select id="tm_author_var" name="options[tm_author_login_var]">
+											<option value="1" <?php selected( $options['tm_author_login_var'], 1 ); ?>>gainwpAuthor</option>
+											<option value="0" <?php selected( $options['tm_author_login_var'], 0 ); ?>><?php _e( "Disabled", 'ga-in' ); ?></option>
 										</select>
 									</td>
 								</tr>
