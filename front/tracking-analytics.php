@@ -138,10 +138,21 @@ if ( ! class_exists( 'GAINWP_Tracking_Analytics_Common' ) ) {
 
 				$root_domain = GAINWP_Tools::get_root_domain();
 
-				wp_enqueue_script( 'gainwp-tracking-analytics-events', GAINWP_URL . 'front/js/tracking-analytics-events.js', array( 'jquery' ), GAINWP_CURRENT_VERSION, $this->gainwp->config->options['trackingevents_infooter'] );
+				if (GAINWP_DEBUG_JS) {
+          wp_enqueue_script( 'gainwp-tracking-analytics-events', GAINWP_URL . 'front/js/tracking-analytics-events.js', array( 'jquery' ), GAINWP_CURRENT_VERSION, $this->gainwp->config->options['trackingevents_infooter'] );
+        }
+				else {
+          wp_enqueue_script( 'gainwp-tracking-analytics-events', GAINWP_URL . 'front/js/tracking-analytics-events.min.js', array( 'jquery' ), GAINWP_CURRENT_VERSION, $this->gainwp->config->options['trackingevents_infooter'] );
+        }
 
 				if ( $this->gainwp->config->options['ga_pagescrolldepth_tracking'] ) {
-					wp_enqueue_script( 'gainwp-pagescrolldepth-tracking', GAINWP_URL . 'front/js/tracking-scrolldepth.js', array( 'jquery' ), GAINWP_CURRENT_VERSION, $this->gainwp->config->options['trackingevents_infooter'] );
+				  if (GAINWP_DEBUG_JS) {
+            wp_enqueue_script( 'gainwp-pagescrolldepth-tracking', GAINWP_URL . 'front/js/tracking-scrolldepth.js', array( 'jquery' ), GAINWP_CURRENT_VERSION, $this->gainwp->config->options['trackingevents_infooter'] );
+          }
+				  else {
+            wp_enqueue_script( 'gainwp-pagescrolldepth-tracking', GAINWP_URL . 'front/js/tracking-scrolldepth.min.js', array( 'jquery' ), GAINWP_CURRENT_VERSION, $this->gainwp->config->options['trackingevents_infooter'] );
+          }
+
 				}
 
 				/* @formatter:off */

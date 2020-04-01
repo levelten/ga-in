@@ -25,6 +25,8 @@ if ( ! defined( 'GAINWP_ENDPOINT_URL' ) ) {
 	define( 'GAINWP_ENDPOINT_URL', '' );
 }
 
+define('GAINWP_DEBUG_JS', 0);
+
 
 if ( ! class_exists( 'GAINWP_Manager' ) ) {
 

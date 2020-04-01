@@ -2,13 +2,13 @@
 Contributors: tomdude
 Tags: analytics,google analytics,google analytics code,google analytics dashboard,google analytics plugin,google analytics tracking code,google analytics widget,gtag
 Requires at least: 3.5
-Tested up to: 5.3
+Tested up to: 5.4
 Stable tag: 5.4.5-dev
 Requires PHP: 5.2.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Connects Google Analytics with your WordPress site.
+Enable Google Analytics tracking and reporting dashboards in your WordPress site in just seconds.
 
 == Description ==
 The GAinWP Google Analytics Integration for WordPress plugin easily integrates Google Analytics tracking and dashboard reporting into your website in just minutes.
