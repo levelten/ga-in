@@ -4,7 +4,7 @@
  * Plugin URI: https://intelligencewp.com/google-analytics-in-wordpress
  * Description: Automatically adds Google Analytics tracking to your site and displays Google Analytics reports and real-time statistics in your dashboard.
  * Author: IntelligenceWP
- * Version: 5.4.5-dev
+ * Version: 5.4.5
  * Author URI: https://intelligencewp.com
  * Text Domain: ga-in
  * Domain Path: /languages
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) )
 
 // Plugin Version
 if ( ! defined( 'GAINWP_CURRENT_VERSION' ) ) {
-	define( 'GAINWP_CURRENT_VERSION', '5.4.5-dev' );
+	define( 'GAINWP_CURRENT_VERSION', '5.4.5' );
 }
 
 if ( ! defined( 'GAINWP_ENDPOINT_URL' ) ) {
