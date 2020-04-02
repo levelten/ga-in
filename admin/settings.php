@@ -1973,7 +1973,7 @@ intel_d($profiles);
               <a href="https://wordpress.org/plugins/intelligence/"><span class="dashicons dashicons-analytics" style="font-size: 2.0em; text-decoration: none;"></span></a>
             </div>
             <div class="gainwp-desc">
-              <?php printf(__('%s - Enhance Google Analtyics for content marketers.', 'ga-in'), sprintf('<a href="https://wordpress.org/plugins/intelligence/">%s</a>', __('Intelligence plugin', 'ga-in')));?>
+              <?php printf(__('%s - Enhance Google Analytics for content marketers.', 'ga-in'), sprintf('<a href="https://wordpress.org/plugins/intelligence/">%s</a>', __('Intelligence plugin', 'ga-in')));?>
             </div>
           </div>
         </div>
