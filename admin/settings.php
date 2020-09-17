@@ -1241,13 +1241,13 @@ intel_d($profiles);
                               <?php echo "<h3>" . __( "Google Analytics API Authorization", 'ga-in' ) . "</h3>";?>
                             </td>
                           </tr>
-                          <php if (0): // TODO: create doc ?>
+                          <?php if (0): // TODO: create doc ?>
                           <tr>
                             <td colspan="2" class="gainwp-settings-info">
                               <?php printf(__('You need to create a %1$s and watch this %2$s before proceeding to authorization.', 'ga-in'), sprintf('<a href="%1$s" target="_blank">%2$s</a>', 'https://intelligencewp.com/creating-a-google-analytics-account/?utm_source=gainwp_config&utm_medium=link&utm_content=top_tutorial&utm_campaign=gainwp', __("free analytics account", 'ga-in')), sprintf('<a href="%1$s" target="_blank">%2$s</a>', 'https://intelligencewp.com/google-analytics-in-wordpress/?utm_source=gainwp_config&utm_medium=link&utm_content=top_video&utm_campaign=gainwp', __("video tutorial", 'ga-in')));?>
                             </td>
                           </tr>
-                          <php endif; ?>
+                          <?php endif; ?>
                           <?php if (! $options['token'] || ($options['user_api']  && ! $options['network_mode'])) : ?>
                             <tr>
                               <td colspan="2" class="gainwp-settings-info">
