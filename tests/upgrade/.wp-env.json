@@ -1,0 +1,17 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/wp-env.json",
+	"core": null,
+	"phpVersion": "8.3",
+	"plugins": [],
+	"port": 8897,
+	"testsEnvironment": false,
+	"mappings": {
+		"wp-content/gainwp-build": "./build/upgrade",
+		"wp-content/gainwp-upgrade-test": "./tests/upgrade"
+	},
+	"config": {
+		"WP_DEBUG": true,
+		"WP_DEBUG_LOG": true,
+		"WP_DEBUG_DISPLAY": false
+	}
+}

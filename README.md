@@ -17,10 +17,15 @@ composer test      # PHP unit tests (PHPUnit + Brain Monkey, no WordPress needed
 composer lint      # WordPress Coding Standards + PHP 7.4 compatibility
 composer analyse   # PHPStan level 8
 composer check     # all three
-npm test           # behavior tests for assets/js/events.js (jsdom)
+npm test           # behavior tests for assets/js/*.js (jsdom)
+npm run test:upgrade  # update a real 5.4.6 install to this build (needs Docker)
 ```
 
 CI runs all of these on every push and pull request, across PHP 7.4 to 8.4, plus the wordpress.org [Plugin Check](https://github.com/WordPress/plugin-check-action) against a release build.
+
+### Upgrade test
+
+`npm run test:upgrade` starts a separate wp-env site (port 8897), installs GAinWP 5.4.6 from wordpress.org, configures it with 5.4.6's own code as a Universal Analytics site and as a Tag Manager site, then updates it to a release build of this repository. It checks that the plugin stays active, settings migrate, credentials and cached reports are removed, the front end outputs the right tag, no PHP errors are logged and uninstall removes everything. CI runs it on PHP 7.4 and 8.3. Set `WP_ENV_PHP_VERSION` to try another PHP version and `KEEP_ENV=1` to keep the site running afterwards.
 
 ## Local WordPress site
 
@@ -55,6 +60,12 @@ Existing sites update automatically, so these must not change without a migratio
 - Tag Manager data layer variable names (`gainwp*`), which users reference in their containers.
 - GA4 parameter and event names (`post_author`, `email_link_click`, ...), which users register as custom dimensions.
 - Public hooks listed in readme.txt.
+
+## Known gaps from 5.x
+
+Deliberately left out of 6.0; revisit if users ask.
+
+- **Custom event labels from HTML attributes.** 5.x let `data-vars-ga-category`, `data-vars-ga-action` and `data-vars-ga-label` on a tracked link override its UA event category, action and label. GA4 has no category/action/label, so 6.0 ignores them and sends the default event names. If needed: in `assets/js/events.js`, send `data-vars-ga-label` as `link_text` on links GAinWP already tracks, and add a `data-gainwp-event` attribute to rename the event (with tests in `tests/js/events.test.mjs`).
 
 ## Releasing
 

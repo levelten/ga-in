@@ -8,7 +8,8 @@
 		"env:start": "wp-env start",
 		"env:stop": "wp-env stop",
 		"env:cli": "wp-env run cli wp",
-		"env:destroy": "wp-env destroy"
+		"env:destroy": "wp-env destroy",
+		"test:upgrade": "bash tests/upgrade/run.sh"
 	},
 	"devDependencies": {
 		"@wordpress/env": "^12.0.0",

@@ -1,4 +1,4 @@
-=== GAinWP Google Analytics Integration for WordPress ===
+=== GAinWP Google Analytics Integration for WP ===
 Contributors: tomdude
 Tags: google analytics, ga4, google tag manager, consent mode, analytics
 Requires at least: 6.0
@@ -55,6 +55,7 @@ Removed:
 * Download, outbound link and form submit events: GA4 enhanced measurement records these itself.
 * Google Optimize (discontinued by Google), Analytics on AMP pages, Universal Analytics ecommerce, sample rates, enhanced link attribution and the custom cookie name.
 * IP anonymization (GA4 never stores IP addresses) and the remarketing switch (manage Google signals in Google Analytics instead).
+* Custom event categories, actions and labels set with `data-vars-ga-*` attributes. GA4 has no categories or labels, so tracked links send the standard event names.
 * Your stored Google sign-in and cached report data are deleted.
 
 Opt-outs recorded by 5.x are still honored.

@@ -67,7 +67,6 @@ final class PrivacyTest extends TestCase {
 		// Tag Manager sites usually have no Measurement ID; the flag still blocks the container.
 		$script = OptOut::script( $this->options( array( 'allow_optout' => true ) ) );
 
-		$this->assertStringContainsString( 'window.gaOptout = window.gaOptout || function', $script, '5.x users may call gaOptout() from their own links.' );
 		$this->assertStringEndsWith( '({"cookie":"gainwp_optout","flag":"gainwpOptOut","disableKey":"","respectDnt":false,"optout":true});', $script );
 	}
 
@@ -101,25 +100,27 @@ final class PrivacyTest extends TestCase {
 		$this->assertStringContainsString( '/; ga-disable-UA-[^=;]*=true(;|$)/.test(cookies)', $script );
 	}
 
-	public function test_handler_is_printed_on_every_page_when_optout_is_on(): void {
+	public function test_handler_script_loads_on_every_page_when_optout_is_on(): void {
 		OptOut::register_handler( $this->options( array() ) );
-		$this->assertFalse( has_action( 'wp_footer' ) );
+		$this->assertFalse( has_action( 'wp_enqueue_scripts' ) );
 
-		$options = $this->options( array( 'allow_optout' => true ) );
-		OptOut::register_handler( $options );
-		$this->assertTrue( has_action( 'wp_footer' ) );
-
-		Functions\expect( 'wp_print_inline_script_tag' )->once()->with(
-			\Mockery::on(
-				static function ( $script ) {
-					return false !== strpos( $script, 'window.gaOptout = window.gaOptout || function' )
-						&& false !== strpos( $script, ".closest('.gainwp_useroptout')" )
-						&& false !== strpos( $script, "event: 'gainwp_optout'" );
-				}
-			),
-			array( 'id' => 'gainwp-optout' )
+		$options = $this->options(
+			array(
+				'allow_optout'   => true,
+				'measurement_id' => 'G-TEST1234',
+			)
 		);
-		OptOut::print_handler( $options );
+		OptOut::register_handler( $options );
+		$this->assertTrue( has_action( 'wp_enqueue_scripts' ) );
+
+		Functions\when( 'plugins_url' )->justReturn( 'https://example.com/optout.js' );
+		Functions\expect( 'wp_enqueue_script' )->once()->with( 'gainwp-optout', 'https://example.com/optout.js', array(), GAINWP_VERSION, \Mockery::type( 'array' ) );
+		Functions\expect( 'wp_add_inline_script' )->once()->with(
+			'gainwp-optout',
+			'window.gainwpOptOutSettings = {"cookie":"gainwp_optout","flag":"gainwpOptOut","disableKey":"ga-disable-G-TEST1234","respectDnt":false,"optout":true};',
+			'before'
+		);
+		OptOut::enqueue_handler( $options );
 	}
 
 	public function test_shortcode_does_not_register_hooks(): void {
