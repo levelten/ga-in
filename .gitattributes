@@ -1,0 +1,19 @@
+* text=auto eol=lf
+/.github export-ignore
+/.wordpress-org export-ignore
+/assets-src export-ignore
+/build export-ignore
+/tests export-ignore
+.phpunit.result.cache export-ignore
+README.md export-ignore
+.distignore export-ignore
+.gitattributes export-ignore
+.gitignore export-ignore
+.wp-env.json export-ignore
+composer.json export-ignore
+composer.lock export-ignore
+package.json export-ignore
+package-lock.json export-ignore
+phpcs.xml.dist export-ignore
+phpstan.neon.dist export-ignore
+phpunit.xml.dist export-ignore

@@ -1,0 +1,45 @@
+{
+	"name": "levelten/ga-in",
+	"description": "GAinWP: Google Analytics 4 and Google Tag Manager for WordPress.",
+	"type": "wordpress-plugin",
+	"license": "GPL-2.0-or-later",
+	"require": {
+		"php": ">=7.4"
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"GAinWP\\": "src/",
+			"GAinWP\\Tests\\": "tests/"
+		}
+	},
+	"config": {
+		"platform": {
+			"php": "7.4.33"
+		},
+		"sort-packages": true,
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true,
+			"phpstan/extension-installer": true
+		}
+	},
+	"scripts": {
+		"test": "phpunit",
+		"lint": "phpcs",
+		"analyse": "phpstan analyse --memory-limit=1G",
+		"check": [
+			"@lint",
+			"@analyse",
+			"@test"
+		]
+	},
+	"require-dev": {
+		"brain/monkey": "^2.6",
+		"dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+		"phpcompatibility/phpcompatibility-wp": "*",
+		"phpstan/extension-installer": "^1.4",
+		"phpstan/phpstan": "^2.3",
+		"phpunit/phpunit": "^9.6",
+		"szepeviktor/phpstan-wordpress": "^2.0",
+		"wp-coding-standards/wpcs": "^3.1"
+	}
+}

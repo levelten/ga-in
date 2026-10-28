@@ -1,0 +1,8 @@
+parameters:
+	level: 8
+	paths:
+		- gainwp.php
+		- uninstall.php
+		- src
+	bootstrapFiles:
+		- tests/phpstan-bootstrap.php

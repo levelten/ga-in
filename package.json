@@ -1,0 +1,21 @@
+{
+	"name": "ga-in",
+	"private": true,
+	"description": "Development tooling for GAinWP. Not needed to run the plugin.",
+	"license": "GPL-2.0-or-later",
+	"scripts": {
+		"test": "node --test \"tests/js/*.test.mjs\"",
+		"env:start": "wp-env start",
+		"env:stop": "wp-env stop",
+		"env:cli": "wp-env run cli wp",
+		"env:destroy": "wp-env destroy",
+		"test:upgrade": "bash tests/upgrade/run.sh"
+	},
+	"devDependencies": {
+		"@wordpress/env": "^12.0.0",
+		"jsdom": "^24.1.3"
+	},
+	"engines": {
+		"node": ">=22.13"
+	}
+}

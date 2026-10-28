@@ -1,0 +1,33 @@
+name: Deploy to WordPress.org
+
+# Publishing a GitHub release tagged with the version (e.g. 6.0.0) pushes
+# the plugin to the wordpress.org SVN repository. Files in .distignore are
+# left out, and .wordpress-org/ becomes the SVN assets folder.
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check that the tag matches the plugin version
+        id: version
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          grep -Eq "^ \* Version: +${version}$" gainwp.php || { echo "::error::gainwp.php header Version is not ${version}"; exit 1; }
+          grep -q "define( 'GAINWP_VERSION', '${version}' );" gainwp.php || { echo "::error::GAINWP_VERSION is not ${version}"; exit 1; }
+          grep -Eq "^Stable tag: ${version}$" readme.txt || { echo "::error::readme.txt Stable tag is not ${version}"; exit 1; }
+      - uses: 10up/action-wordpress-plugin-deploy@stable
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          SLUG: ga-in
+          # Without a leading "v", so the SVN tag matches readme.txt's Stable tag.
+          VERSION: ${{ steps.version.outputs.version }}

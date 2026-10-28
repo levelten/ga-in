@@ -1,0 +1,23 @@
+# Files excluded from the wordpress.org release.
+/.git
+/.github
+/.wordpress-org
+/assets-src
+/build
+/node_modules
+/tests
+/vendor
+.distignore
+.gitattributes
+.gitignore
+.wp-env.json
+.phpunit.result.cache
+.DS_Store
+composer.json
+composer.lock
+package.json
+package-lock.json
+phpcs.xml.dist
+phpstan.neon.dist
+phpunit.xml.dist
+README.md

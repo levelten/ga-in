@@ -1,1 +1,0 @@
-jQuery(function(){jQuery("#gainwp-widget *").tooltip({items:"[data-gainwp]",content:function(){return jQuery(this).attr("data-gainwp")}})});
