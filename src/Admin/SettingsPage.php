@@ -393,8 +393,8 @@ final class SettingsPage {
 			'select',
 			array(
 				'choices'     => array(
-					'none'       => __( 'Not set: my consent banner plugin handles it', 'ga-in' ),
-					'denied_eea' => __( 'Denied in the EEA, UK and Switzerland; granted elsewhere', 'ga-in' ),
+					'none'       => __( 'Not set (my consent banner handles it)', 'ga-in' ),
+					'denied_eea' => __( 'Denied in the EEA, UK and Switzerland only', 'ga-in' ),
 					'denied'     => __( 'Denied everywhere', 'ga-in' ),
 				),
 				'description' => __( 'Google Consent Mode v2. Choose a denied option only if your consent banner sends consent updates; otherwise Google Analytics stays in cookieless mode for those visitors.', 'ga-in' ),

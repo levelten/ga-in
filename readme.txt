@@ -103,6 +103,12 @@ Developers can use these hooks:
 
 `gainwp_gtag_commands` still runs but is deprecated in favor of `gainwp_gtag_config`.
 
+== Screenshots ==
+
+1. Choose Google Analytics 4 or Google Tag Manager and paste your ID. The status line shows what GAinWP is sending.
+2. Page attributes sent with every page view, and engagement events that GA4 enhanced measurement doesn't cover.
+3. Privacy settings (Consent Mode v2 defaults, Do Not Track and Global Privacy Control, visitor opt-out) and role exclusions.
+
 == External services ==
 
 GAinWP connects your site to Google so you can measure visits. It contacts no other service.

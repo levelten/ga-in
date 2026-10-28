@@ -1,6 +1,7 @@
 * text=auto eol=lf
 /.github export-ignore
 /.wordpress-org export-ignore
+/assets-src export-ignore
 /build export-ignore
 /tests export-ignore
 .phpunit.result.cache export-ignore
