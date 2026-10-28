@@ -1,0 +1,64 @@
+name: WordPress compatibility
+
+# Weekly: when a new WordPress major/minor version is out, run Plugin Check
+# against it and open a pull request bumping "Tested up to" in readme.txt.
+# Pull requests opened with GITHUB_TOKEN don't trigger CI, so the check runs
+# here first and the pull request only opens when it passes.
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  tested-up-to:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compare with the latest WordPress release
+        id: versions
+        run: |
+          latest=$(curl -fsS https://api.wordpress.org/core/version-check/1.7/ | jq -r '.offers[0].version' | cut -d. -f1,2)
+          current=$(sed -nE 's/^Tested up to: *([0-9.]+).*/\1/p' readme.txt)
+          newest=$(printf '%s\n%s\n' "$latest" "$current" | sort -V | tail -1)
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          if [ "$newest" = "$latest" ] && [ "$latest" != "$current" ]; then
+            echo "outdated=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "readme: $current, latest WordPress: $latest"
+
+      - name: Build the release folder
+        if: steps.versions.outputs.outdated == 'true'
+        run: rsync -a --exclude-from=.distignore ./ build/ga-in/
+
+      - uses: wordpress/plugin-check-action@v1
+        if: steps.versions.outputs.outdated == 'true'
+        with:
+          build-dir: build/ga-in
+
+      - name: Open a pull request
+        if: steps.versions.outputs.outdated == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LATEST: ${{ steps.versions.outputs.latest }}
+        run: |
+          branch="chore/tested-up-to-${LATEST}"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null; then
+            echo "Branch $branch already exists."
+            exit 0
+          fi
+          rm -rf build
+          sed -i -E "s/^Tested up to: .*/Tested up to: ${LATEST}/" readme.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git commit -am "Mark as tested up to WordPress ${LATEST}"
+          git push origin "$branch"
+          gh pr create \
+            --title "Tested up to WordPress ${LATEST}" \
+            --body "WordPress ${LATEST} is out and Plugin Check passed against it in the scheduled run. Smoke test a page view on ${LATEST}, then merge and release."
