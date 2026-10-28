@@ -18,7 +18,7 @@ jobs:
   tested-up-to:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Compare with the latest WordPress release
         id: versions
@@ -34,7 +34,7 @@ jobs:
 
       - name: Build the release folder
         if: steps.versions.outputs.outdated == 'true'
-        run: rsync -a --exclude-from=.distignore ./ build/ga-in/
+        run: mkdir -p build && rsync -a --exclude-from=.distignore ./ build/ga-in/
 
       - uses: wordpress/plugin-check-action@v1
         if: steps.versions.outputs.outdated == 'true'
