@@ -30,6 +30,7 @@ function gainwp_uninstall_site() {
 	delete_option( \GAinWP\Upgrade::VERSION_OPTION );
 	delete_option( \GAinWP\Upgrade::LEGACY_BACKUP_OPTION );
 	delete_option( \GAinWP\Upgrade::WARNINGS_OPTION );
+	delete_option( \GAinWP\Upgrade::WHATS_NEW_OPTION );
 	\GAinWP\Upgrade::delete_legacy_options();
 }
 

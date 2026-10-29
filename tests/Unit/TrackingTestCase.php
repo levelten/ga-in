@@ -23,23 +23,39 @@ abstract class TrackingTestCase extends TestCase {
 			array(
 				'ID'          => 42,
 				'post_author' => '7',
+				'post_type'   => 'post',
 			)
 		);
 
 		Functions\stubs(
 			array(
-				'get_queried_object'  => $post,
-				'is_single'           => true,
-				'is_page'             => false,
-				'is_category'         => false,
-				'get_the_author_meta' => static function ( $field ) {
+				'get_queried_object'   => $post,
+				'is_singular'          => true,
+				'is_single'            => true,
+				'is_category'          => false,
+				'is_404'               => false,
+				'is_search'            => false,
+				'is_archive'           => false,
+				'is_home'              => false,
+				'get_the_author_meta'  => static function ( $field ) {
 					return 'user_login' === $field ? 'jdoe' : 'Jane &amp; Doe';
 				},
-				'get_the_date'        => static function ( $format ) {
+				'get_the_date'         => static function ( $format ) {
 					return 'Y' === $format ? '2024' : '2024-03';
 				},
-				'get_the_category'    => array( (object) array( 'name' => 'News' ) ),
-				'get_the_tags'        => array( (object) array( 'name' => 'GA4' ), (object) array( 'name' => 'WordPress' ) ),
+				'get_the_category'     => array(
+					(object) array(
+						'term_id' => 3,
+						'name'    => 'News',
+					),
+					(object) array(
+						'term_id' => 5,
+						'name'    => 'Reviews',
+					),
+				),
+				'get_the_tags'         => array( (object) array( 'name' => 'GA4' ), (object) array( 'name' => 'WordPress' ) ),
+				'get_post_meta'        => '',
+				'get_post_type_object' => (object) array( 'labels' => (object) array( 'name' => 'Posts' ) ),
 			)
 		);
 	}

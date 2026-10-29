@@ -7,10 +7,10 @@
 
 namespace GAinWP\Admin;
 
+use GAinWP\Integrations\FormSource;
+use GAinWP\Integrations\Registry;
 use GAinWP\Options;
 use GAinWP\Upgrade;
-use GAinWP\Tracking\Gtag;
-use GAinWP\Tracking\TagManager;
 
 /**
  * Settings > Google Analytics, built on the Settings API.
@@ -35,6 +35,20 @@ final class SettingsPage {
 	private const GROUP = 'gainwp';
 
 	/**
+	 * Styles of the goals and forms tables. The settings table's own `th`
+	 * style reaches their header cells, and below 782px WordPress turns
+	 * every settings cell and text input into a full-width block, which
+	 * would pull these tables apart.
+	 */
+	private const TABLE_CSS = '.gainwp-values { max-width: 44em; }
+.form-table .gainwp-values th { width: auto; padding: 8px 10px; }
+.gainwp-values .gainwp-value { white-space: nowrap; }
+@media screen and (max-width: 782px) {
+	.form-table .gainwp-values th, .form-table .gainwp-values td { display: table-cell; padding: 8px 10px; }
+	.form-table .gainwp-values td input[type="text"] { display: inline-block; width: 5em; }
+}';
+
+	/**
 	 * Plugin settings.
 	 *
 	 * @var Options
@@ -56,14 +70,8 @@ final class SettingsPage {
 	public function register(): void {
 		add_action( 'admin_menu', array( $this, 'add_page' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_styles' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( GAINWP_FILE ), array( $this, 'action_links' ) );
-
-		// Migration warnings stay until the settings are saved.
-		$clear = static function () {
-			delete_option( Upgrade::WARNINGS_OPTION );
-		};
-		add_action( 'add_option_' . Options::OPTION, $clear );
-		add_action( 'update_option_' . Options::OPTION, $clear );
 	}
 
 	/**
@@ -113,8 +121,10 @@ final class SettingsPage {
 		);
 
 		$this->register_tracking_section();
-		$this->register_page_data_section();
+		$this->register_goals_section();
+		$this->register_forms_section();
 		$this->register_events_section();
+		$this->register_page_data_section();
 		$this->register_privacy_section();
 		$this->register_exclusions_section();
 		$this->register_advanced_section();
@@ -130,6 +140,11 @@ final class SettingsPage {
 	public function sanitize( $input ): array {
 		$input    = is_array( $input ) ? $input : array();
 		$previous = $this->options->all();
+
+		// Migration warnings and the 6.1 news stay until the form is
+		// submitted, even without changes (WordPress then skips the update hooks).
+		delete_option( Upgrade::WARNINGS_OPTION );
+		delete_option( Upgrade::WHATS_NEW_OPTION );
 
 		$ids = array(
 			'measurement_id'       => array(
@@ -163,6 +178,10 @@ final class SettingsPage {
 			$input[ $key ] = $previous[ $key ];
 		}
 
+		// Keep the settings of forms not listed right now, such as forms of
+		// a form plugin that is deactivated for a while.
+		$input['forms'] = (array) ( $input['forms'] ?? array() ) + $previous['forms'];
+
 		return Options::sanitize( $input );
 	}
 
@@ -173,17 +192,27 @@ final class SettingsPage {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
+		// Only selects a tab.
+		$tab = isset( $_GET['tab'] ) && 'setup' === $_GET['tab'] ? 'setup' : 'settings'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 			<?php $this->render_status(); ?>
-			<form action="options.php" method="post">
-				<?php
-				settings_fields( self::GROUP );
-				do_settings_sections( self::SLUG );
-				submit_button();
-				?>
-			</form>
+			<nav class="nav-tab-wrapper">
+				<a href="<?php echo esc_url( self::url() ); ?>" class="nav-tab<?php echo 'settings' === $tab ? ' nav-tab-active' : ''; ?>"><?php esc_html_e( 'Settings', 'ga-in' ); ?></a>
+				<a href="<?php echo esc_url( self::url() . '&tab=setup' ); ?>" class="nav-tab<?php echo 'setup' === $tab ? ' nav-tab-active' : ''; ?>"><?php esc_html_e( 'GA4 setup', 'ga-in' ); ?></a>
+			</nav>
+			<?php if ( 'setup' === $tab ) : ?>
+				<?php ( new Checklist( $this->options ) )->render(); ?>
+			<?php else : ?>
+				<form action="options.php" method="post">
+					<?php
+					settings_fields( self::GROUP );
+					do_settings_sections( self::SLUG );
+					submit_button();
+					?>
+				</form>
+			<?php endif; ?>
 		</div>
 		<?php
 	}
@@ -211,6 +240,19 @@ final class SettingsPage {
 		}
 
 		printf( '<div class="notice inline %s"><p>%s</p></div>', esc_attr( $class ), wp_kses( $message, self::ALLOWED_HTML ) );
+
+		$reminder = ( new Checklist( $this->options ) )->forms_reminder();
+		if ( '' !== $reminder ) {
+			printf( '<div class="notice inline notice-info"><p>%s</p></div>', wp_kses( $reminder, self::ALLOWED_HTML ) );
+		}
+
+		$news = Notices::whats_new();
+		if ( '' !== $news ) {
+			printf( '<div class="notice inline notice-info"><p>%s</p></div>', wp_kses( $news, self::ALLOWED_HTML ) );
+		}
+		foreach ( SiteKit::warnings( $this->options ) as $warning ) {
+			printf( '<div class="notice inline notice-warning"><p>%s</p></div>', wp_kses( $warning, self::ALLOWED_HTML ) );
+		}
 
 		$warnings = (array) get_option( Upgrade::WARNINGS_OPTION, array() );
 		if ( isset( $warnings['affiliate_pattern'] ) ) {
@@ -303,51 +345,114 @@ final class SettingsPage {
 			__( 'Page attributes', 'ga-in' ),
 			sprintf(
 				/* translators: %s: help article URL. */
-				__( 'Sent with every page view. In Google Analytics 4, <a href="%s" target="_blank" rel="noopener">register each one as an event-scoped custom dimension</a> using the parameter name shown, or it will not appear in reports. In Tag Manager mode they are pushed to the data layer under the variable name shown.', 'ga-in' ),
+				__( 'Sent with every event under the parameter names shown. Type, ID and content group are built into Google Analytics 4. <a href="%s" target="_blank" rel="noopener">Register the others as event-scoped custom dimensions</a>, or they will not appear in reports. In Tag Manager mode they are pushed to the data layer under the same names, and under the GAinWP 5.x names too.', 'ga-in' ),
 				'https://support.google.com/analytics/answer/10075209'
 			)
 		);
 
 		$labels  = array(
-			'author'        => __( 'Author', 'ga-in' ),
-			'category'      => __( 'Category', 'ga-in' ),
-			'tags'          => __( 'Tags', 'ga-in' ),
-			'publish_year'  => __( 'Publication year', 'ga-in' ),
-			'publish_month' => __( 'Publication month', 'ga-in' ),
-			'user_type'     => __( 'Logged in or guest', 'ga-in' ),
+			'content_type'          => __( 'Content type (post type, archive, search or 404)', 'ga-in' ),
+			'content_id'            => __( 'Content ID', 'ga-in' ),
+			'content_author'        => __( 'Author display name', 'ga-in' ),
+			'content_category'      => __( 'Primary category', 'ga-in' ),
+			'content_tags'          => __( 'Tags', 'ga-in' ),
+			'content_publish_month' => __( 'Publication month', 'ga-in' ),
+			'user_status'           => __( 'Logged in or guest', 'ga-in' ),
 		);
 		$choices = array();
 		foreach ( Options::PAGE_DATA_KEYS as $key ) {
-			$choices[ $key ] = sprintf( '%1$s &mdash; <code>%2$s</code> / <code>%3$s</code>', esc_html( $labels[ $key ] ), Gtag::PARAMETERS[ $key ], TagManager::VARIABLES[ $key ] );
+			$choices[ $key ] = sprintf( '%1$s &mdash; <code>%2$s</code>', esc_html( $labels[ $key ] ), $key );
 		}
 
 		$this->field( 'page_data', 'page_data', __( 'Attributes', 'ga-in' ), 'checkboxes', array( 'choices' => $choices ) );
 
 		$this->field(
 			'page_data',
-			'author_format',
-			__( 'Author format', 'ga-in' ),
+			'content_group',
+			__( 'Content group', 'ga-in' ),
 			'select',
 			array(
 				'choices'     => array(
-					'display_name' => __( 'Display name', 'ga-in' ),
-					'user_login'   => __( 'Username', 'ga-in' ),
+					'none'      => __( 'Not set', 'ga-in' ),
+					'post_type' => __( 'Post type (Posts, Pages, ...)', 'ga-in' ),
+					'category'  => __( 'Primary category', 'ga-in' ),
 				),
-				'description' => __( 'Display names are safer: usernames are half of a login.', 'ga-in' ),
+				'description' => __( 'Fills GA4&rsquo;s built-in <code>content_group</code>, which the standard Pages and screens report can show instead of page titles.', 'ga-in' ),
 			)
 		);
 	}
 
 	/**
-	 * Engagement events section.
+	 * Goals section.
+	 */
+	private function register_goals_section(): void {
+		$this->section(
+			'goals',
+			__( 'Goals', 'ga-in' ),
+			__( 'The results that matter on your site. Goals send their value to Google Analytics 4 and, through it, Google Ads; other events never send a value. In GA4, mark each goal as a key event (see the GA4 setup tab).', 'ga-in' )
+		);
+
+		$this->field(
+			'goals',
+			'currency',
+			__( 'Currency', 'ga-in' ),
+			'text',
+			array(
+				'placeholder' => 'USD',
+				'description' => __( 'Three-letter code such as USD or EUR. Use the currency set in your GA4 property.', 'ga-in' ),
+			)
+		);
+
+		$this->field(
+			'goals',
+			'goals',
+			__( 'Goals and values', 'ga-in' ),
+			'goals',
+			array(
+				'choices'     => self::goal_labels(),
+				'description' => __( 'Estimate what each result is worth to your business, for example what a customer is worth multiplied by the share of leads that become customers. Enter numbers such as 100 or 12.50. Leave the value empty to count a goal without a value.', 'ga-in' ),
+			)
+		);
+	}
+
+	/**
+	 * Forms section: one table per active form plugin.
+	 */
+	private function register_forms_section(): void {
+		$sources = Registry::form_sources( $this->options );
+
+		$this->section(
+			'forms',
+			__( 'Forms', 'ga-in' ),
+			$sources
+				? __( 'Only successful submissions count: not failed validation or spam. Each form sends <code>form_complete</code> until you choose otherwise. Set the forms that bring you business, such as contact, quote or booking forms, to Lead, so they send <code>generate_lead</code> and count as a goal. A value here counts only when the form&rsquo;s event is a goal, and replaces that goal&rsquo;s value for the form. Field values are never sent.', 'ga-in' )
+				: __( 'GAinWP tracks Gravity Forms, Contact Form 7 and WPForms. None of them is active.', 'ga-in' )
+		);
+
+		$this->field(
+			'forms',
+			'events',
+			__( 'Form tracking', 'ga-in' ),
+			'flags',
+			array( 'choices' => array( 'forms' => __( 'Send an event when a form is submitted successfully', 'ga-in' ) ) ),
+			'forms_enabled'
+		);
+
+		foreach ( $sources as $source ) {
+			$this->field( 'forms', 'forms', $source->label(), 'forms', array( 'source' => $source ), 'forms_' . $source->provider() );
+		}
+	}
+
+	/**
+	 * Events section.
 	 */
 	private function register_events_section(): void {
 		$this->section(
 			'events',
-			__( 'Engagement events', 'ga-in' ),
+			__( 'Events', 'ga-in' ),
 			sprintf(
 				/* translators: %s: help article URL. */
-				__( 'Google Analytics 4 mode only. GA4 <a href="%s" target="_blank" rel="noopener">enhanced measurement</a> already records outbound clicks, file downloads, form interactions, site search, video engagement and 90%% scroll. These events cover what it does not.', 'ga-in' ),
+				__( 'Sent in Google Analytics 4 and Tag Manager modes. GA4 <a href="%s" target="_blank" rel="noopener">enhanced measurement</a> already records page views, outbound clicks, file downloads, form interactions, site search, video engagement and 90%% scroll, so GAinWP leaves those to it.', 'ga-in' ),
 				'https://support.google.com/analytics/answer/9216061'
 			)
 		);
@@ -355,7 +460,21 @@ final class SettingsPage {
 		$this->field(
 			'events',
 			'events',
-			__( 'Events', 'ga-in' ),
+			__( 'WordPress', 'ga-in' ),
+			'flags',
+			array(
+				'choices' => array(
+					'login'    => __( 'Logins', 'ga-in' ) . ' &mdash; <code>login</code>',
+					'sign_up'  => __( 'Registrations', 'ga-in' ) . ' &mdash; <code>sign_up</code>',
+					'comments' => __( 'Comments, except spam', 'ga-in' ) . ' &mdash; <code>comment_submit</code>',
+				),
+			)
+		);
+
+		$this->field(
+			'events',
+			'events',
+			__( 'Engagement', 'ga-in' ),
 			'flags',
 			array(
 				'choices' => array(
@@ -363,9 +482,10 @@ final class SettingsPage {
 					'phone'      => __( 'Phone link clicks', 'ga-in' ) . ' &mdash; <code>phone_link_click</code>',
 					'anchors'    => __( 'Same-page anchor link clicks', 'ga-in' ) . ' &mdash; <code>anchor_link_click</code>',
 					'affiliates' => __( 'Affiliate link clicks', 'ga-in' ) . ' &mdash; <code>affiliate_link_click</code>',
-					'scroll'     => __( 'Scroll depth at 25, 50, 75 and 100%', 'ga-in' ) . ' &mdash; <code>scroll_depth</code>',
+					'scroll'     => __( 'Scroll depth at 25, 50 and 75%', 'ga-in' ) . ' &mdash; <code>scroll_depth</code>',
 				),
-			)
+			),
+			'engagement'
 		);
 
 		$this->field(
@@ -375,9 +495,35 @@ final class SettingsPage {
 			'textarea',
 			array(
 				'value'       => implode( "\n", $this->options->get( 'affiliate_links' ) ),
-				'description' => __( 'Links whose URL contains any of these, one per line, count as affiliate links. For example <code>/out/</code> or <code>/go/</code>.', 'ga-in' ),
+				'description' => __( 'Links whose URL contains any of these, one per line, count as affiliate links, as do links marked <code>rel="sponsored"</code>. For example <code>/out/</code> or <code>/go/</code>.', 'ga-in' ),
 			)
 		);
+	}
+
+	/**
+	 * Labels for events that can be goals.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function goal_labels(): array {
+		return array(
+			'generate_lead'        => __( 'Lead: a form set to Lead is submitted', 'ga-in' ),
+			'sign_up'              => __( 'Sign-up: a registration, or a form set to Sign-up', 'ga-in' ),
+			'form_complete'        => __( 'Form submitted: any form not set to Lead or Sign-up', 'ga-in' ),
+			'comment_submit'       => __( 'Comment posted', 'ga-in' ),
+			'email_link_click'     => __( 'Email link click', 'ga-in' ),
+			'phone_link_click'     => __( 'Phone link click', 'ga-in' ),
+			'affiliate_link_click' => __( 'Affiliate link click', 'ga-in' ),
+		);
+	}
+
+	/**
+	 * Formats a stored value for an input: "100", "12.5", or "" for none.
+	 *
+	 * @param float|null $value Stored value.
+	 */
+	public static function format_value( ?float $value ): string {
+		return null === $value ? '' : rtrim( rtrim( number_format( $value, 2, '.', '' ), '0' ), '.' );
 	}
 
 	/**
@@ -512,10 +658,11 @@ final class SettingsPage {
 	 * @param string               $section Section ID (without prefix).
 	 * @param string               $key     Setting key.
 	 * @param string               $title   Row label.
-	 * @param string               $type    text, number, textarea, checkbox, checkboxes, flags, radios or select.
+	 * @param string               $type    text, number, textarea, checkbox, checkboxes, flags, radios, select, goals or forms.
 	 * @param array<string, mixed> $args    choices, label, description, placeholder, value.
+	 * @param string               $id      Field ID when it isn't the setting key.
 	 */
-	private function field( string $section, string $key, string $title, string $type, array $args = array() ): void {
+	private function field( string $section, string $key, string $title, string $type, array $args = array(), string $id = '' ): void {
 		$args += array(
 			'key'   => $key,
 			'type'  => $type,
@@ -524,7 +671,8 @@ final class SettingsPage {
 		if ( in_array( $type, array( 'text', 'number', 'select', 'textarea' ), true ) ) {
 			$args['label_for'] = 'gainwp-' . $key;
 		}
-		add_settings_field( 'gainwp_' . $key, $title, array( $this, 'render_field' ), self::SLUG, 'gainwp_' . $section, $args );
+		// $id tells apart two fields for parts of the same setting.
+		add_settings_field( 'gainwp_' . ( '' !== $id ? $id : $key ), $title, array( $this, 'render_field' ), self::SLUG, 'gainwp_' . $section, $args );
 	}
 
 	/**
@@ -598,6 +746,34 @@ final class SettingsPage {
 				echo '</fieldset>';
 				break;
 
+			case 'goals':
+				self::table_start( array( __( 'Event', 'ga-in' ), __( 'Goal', 'ga-in' ), __( 'Value', 'ga-in' ) ) );
+				foreach ( $args['choices'] as $event => $label ) {
+					$goal = $value[ $event ] ?? array(
+						'goal'  => false,
+						'value' => null,
+					);
+					printf(
+						'<tr><td>%1$s<br><code>%2$s</code></td><td><input type="checkbox" name="%3$s[%2$s][goal]" value="1" aria-label="%4$s"%5$s></td><td class="gainwp-value"><input type="text" inputmode="decimal" name="%3$s[%2$s][value]" value="%6$s" size="8" aria-label="%7$s"> %8$s</td></tr>',
+						esc_html( $label ),
+						esc_attr( $event ),
+						esc_attr( $name ),
+						/* translators: %s: event description. */
+						esc_attr( sprintf( __( '%s is a goal', 'ga-in' ), $label ) ),
+						checked( (bool) $goal['goal'], true, false ),
+						esc_attr( self::format_value( $goal['value'] ) ),
+						/* translators: %s: event description. */
+						esc_attr( sprintf( __( 'Value of %s', 'ga-in' ), $label ) ),
+						esc_html( $this->options->get( 'currency' ) )
+					);
+				}
+				echo '</tbody></table>';
+				break;
+
+			case 'forms':
+				$this->render_forms( $args['source'], $name );
+				break;
+
 			case 'textarea':
 				printf( '<textarea id="%s" name="%s" rows="3" class="regular-text">%s</textarea>', esc_attr( $id ), esc_attr( $name ), esc_textarea( (string) $value ) );
 				break;
@@ -619,6 +795,87 @@ final class SettingsPage {
 		if ( ! empty( $args['description'] ) ) {
 			echo '<p class="description">' . wp_kses( $args['description'], self::ALLOWED_HTML ) . '</p>';
 		}
+	}
+
+	/**
+	 * Adds the styles of the goals and forms tables on the settings screen.
+	 *
+	 * @param string $hook_suffix Current admin screen.
+	 */
+	public function enqueue_styles( string $hook_suffix ): void {
+		if ( 'settings_page_' . self::SLUG !== $hook_suffix ) {
+			return;
+		}
+		wp_register_style( 'gainwp-settings', false, array(), GAINWP_VERSION );
+		wp_enqueue_style( 'gainwp-settings' );
+		wp_add_inline_style( 'gainwp-settings', self::TABLE_CSS );
+	}
+
+	/**
+	 * Opens a goals or forms table inside a settings row, up to the start of
+	 * its body.
+	 *
+	 * @param array<int, string> $headings Column headings.
+	 */
+	private static function table_start( array $headings ): void {
+		echo '<table class="widefat striped gainwp-values"><thead><tr>';
+		foreach ( $headings as $heading ) {
+			printf( '<th scope="col">%s</th>', esc_html( $heading ) );
+		}
+		echo '</tr></thead><tbody>';
+	}
+
+	/**
+	 * Renders the forms of one form plugin with the event each sends and
+	 * its own value.
+	 *
+	 * @param FormSource $source Form plugin integration.
+	 * @param string     $name   Input name of the forms setting.
+	 */
+	private function render_forms( FormSource $source, string $name ): void {
+		$forms = $source->forms();
+		if ( ! $forms ) {
+			echo '<p>' . esc_html__( 'No forms yet.', 'ga-in' ) . '</p>';
+			return;
+		}
+
+		$events = array(
+			'form_complete' => __( 'Form submitted', 'ga-in' ) . ' (form_complete)',
+			'generate_lead' => __( 'Lead', 'ga-in' ) . ' (generate_lead)',
+			'sign_up'       => __( 'Sign-up', 'ga-in' ) . ' (sign_up)',
+			'off'           => __( 'Off', 'ga-in' ),
+		);
+
+		self::table_start( array( __( 'Form', 'ga-in' ), __( 'Sends', 'ga-in' ), __( 'Value', 'ga-in' ) ) );
+		foreach ( $forms as $id => $title ) {
+			$component_id = Options::form_id( $source->provider(), $id );
+			if ( '' === $component_id ) {
+				continue;
+			}
+			$form  = $this->options->form( $component_id );
+			$field = $name . '[' . $component_id . ']';
+
+			printf( '<tr><td>%s<br><code>%s</code></td><td>', esc_html( $title ), esc_html( $component_id ) );
+			printf(
+				'<select name="%s[event]" aria-label="%s">',
+				esc_attr( $field ),
+				/* translators: %s: form title. */
+				esc_attr( sprintf( __( 'Event sent by %s', 'ga-in' ), $title ) )
+			);
+			foreach ( $events as $event => $label ) {
+				printf( '<option value="%s"%s>%s</option>', esc_attr( $event ), selected( $form['event'], $event, false ), esc_html( $label ) );
+			}
+			printf(
+				'</select></td><td class="gainwp-value"><input type="text" inputmode="decimal" name="%s[value]" value="%s" size="8" placeholder="%s" aria-label="%s"> %s</td></tr>',
+				esc_attr( $field ),
+				esc_attr( self::format_value( $form['value'] ) ),
+				esc_attr__( 'Goal value', 'ga-in' ),
+				/* translators: %s: form title. */
+				esc_attr( sprintf( __( 'Value of %s', 'ga-in' ), $title ) ),
+				esc_html( $this->options->get( 'currency' ) )
+			);
+		}//end foreach
+		echo '</tbody></table>';
 	}
 
 	/**

@@ -28,8 +28,12 @@ const OPTOUT = { measurement_id: 'G-TEST1234', allow_optout: true };
 const DNT = { measurement_id: 'G-TEST1234', respect_dnt: true };
 const disabled = ( win ) => win.gainwpOptOut === true && win[ 'ga-disable-G-TEST1234' ] === true;
 
-test( 'nothing is output when neither feature is on', () => {
-	assert.equal( render( { measurement_id: 'G-TEST1234' } ), '' );
+test( 'a stored opt-out is honored after the site turns opt-out off', () => {
+	const off = { measurement_id: 'G-TEST1234' };
+	assert.ok( disabled( run( off, { cookie: 'gainwp_optout=1' } ).win ) );
+	assert.ok( disabled( run( off, { cookie: 'ga-disable-UA-12345-1=true' } ).win ) );
+	assert.equal( disabled( run( off ).win ), false );
+	assert.equal( typeof run( off ).win.gaOptout, 'undefined', 'gaOptout() needs opt-out on' );
 } );
 
 test( 'visitors without an opt-out are tracked', () => {

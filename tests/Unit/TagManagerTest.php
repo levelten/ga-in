@@ -18,29 +18,37 @@ final class TagManagerTest extends TrackingTestCase {
 		$script = ( new TagManager( $this->options( array( 'gtm_container_id' => 'GTM-ABC123' ) ) ) )->inline_script();
 
 		$this->assertStringStartsWith( 'window.dataLayer = window.dataLayer || [];', $script );
-		$this->assertStringContainsString( "})(window,document,'script','dataLayer',\"GTM-ABC123\");", $script );
-		$this->assertStringNotContainsString( 'dataLayer.push({', $script );
-		$this->assertStringNotContainsString( 'function gtag', $script );
+		$this->assertStringContainsString( 'if (!window.gainwpOptOut) {(function(w,d,s,l,i)', $script, 'Stored opt-outs always block the container.' );
+		$this->assertStringContainsString( "})(window,document,'script','dataLayer',\"GTM-ABC123\");}", $script );
+		$this->assertStringNotContainsString( 'window.dataLayer.push({', $script );
+		$this->assertStringNotContainsString( 'function gtag', $script, 'No gtag() unless consent defaults need it.' );
 	}
 
-	public function test_data_layer_keeps_5x_variable_names(): void {
+	public function test_data_layer_has_parameter_and_5x_names(): void {
 		$script = ( new TagManager(
 			$this->options(
 				array(
 					'gtm_container_id' => 'GTM-ABC123',
-					'page_data'        => array( 'author', 'category', 'tags', 'publish_year', 'publish_month', 'user_type' ),
+					'page_data'        => array( 'content_type', 'content_id', 'content_author', 'content_category', 'content_tags', 'content_publish_month', 'user_status' ),
 				)
 			)
 		) )->inline_script();
 
 		$this->assertSame(
 			array(
+				'content_type'               => 'post',
+				'content_id'                 => 'post:42',
+				'content_author'             => 'Jane & Doe',
+				'content_category'           => 'News',
+				'content_tags'               => 'GA4, WordPress',
+				'content_publish_month'      => '2024-03',
+				'user_status'                => 'guest',
 				'gainwpAuthor'               => 'Jane & Doe',
-				'gainwpPublicationYear'      => '2024',
-				'gainwpPublicationYearMonth' => '2024-03',
 				'gainwpCategory'             => 'News',
 				'gainwpTag'                  => 'GA4, WordPress',
+				'gainwpPublicationYearMonth' => '2024-03',
 				'gainwpUser'                 => 'guest',
+				'gainwpPublicationYear'      => '2024',
 			),
 			$this->json_after( $script, 'window.dataLayer.push(' )
 		);

@@ -45,10 +45,12 @@ To try another PHP version without changing the shared config, create `.wp-env.o
 | --- | --- |
 | `gainwp.php` | Bootstrap: PHP version guard, constants, autoloader. Keep the file name: renaming it deactivates the plugin on update. |
 | `src/Options.php` | Settings schema, defaults and sanitizing. Every read goes through `sanitize()`. |
-| `src/Upgrade.php` | One-time migration from 5.x (Universal Analytics) settings. |
+| `src/Upgrade.php` | Settings migrations (5.x and 6.0) and recommended settings for new installs. |
 | `src/Tracking/` | Front-end output: `Gtag` (GA4), `TagManager`, consent, opt-out, page attributes. |
-| `src/Admin/` | Settings screen (Settings API) and admin notices. |
-| `assets/js/events.js` | Engagement events (no build step, no dependencies). |
+| `src/Events/` | Server-side events: `Recorder` (exclusions, goal values, hooks) and `Queue` (one short-lived cookie per request, read by `events.js`). |
+| `src/Integrations/` | What gets recorded: `WordPress` (login, sign-up, comments) and the form plugins, each a small class behind `Registry` and the `gainwp_integrations` filter. |
+| `src/Admin/` | Settings screen (Settings API), GA4 setup checklist, Site Kit overlap detection and admin notices. |
+| `assets/js/events.js` | `gainwp.track()`, engagement events and delivery of server events (no build step, no dependencies). |
 | `uninstall.php` | Deletes all plugin data, including 5.x leftovers. |
 | `.wordpress-org/` | Banners and icons for the wordpress.org SVN `assets` folder. |
 
@@ -57,9 +59,11 @@ To try another PHP version without changing the shared config, create `.wp-env.o
 Existing sites update automatically, so these must not change without a migration:
 
 - Plugin slug, main file (`ga-in/gainwp.php`) and text domain (`ga-in`).
-- Tag Manager data layer variable names (`gainwp*`), which users reference in their containers.
-- GA4 parameter and event names (`post_author`, `email_link_click`, ...), which users register as custom dimensions.
+- Tag Manager data layer variable names (`gainwp*`, `content_*`, the `intelligence` event object), which users reference in their containers.
+- GA4 parameter and event names (`content_author`, `generate_lead`, `email_link_click`, ...), which users register as custom dimensions and mark as key events.
 - Public hooks listed in readme.txt.
+
+6.1 renamed 6.0's page attribute parameters once (`post_author` to `content_author` and so on), a few days after 6.0 shipped. Settings migrate automatically, the `gainwp_page_data` filter maps 6.0 keys, and the changelog tells sites to register the new names. Names are fixed from 6.1 on.
 
 ## Known gaps from 5.x
 

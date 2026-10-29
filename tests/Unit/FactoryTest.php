@@ -67,7 +67,14 @@ final class FactoryTest extends TestCase {
 
 	public function test_excluded_roles_are_not_tracked(): void {
 		Functions\when( 'is_user_logged_in' )->justReturn( true );
-		Functions\when( 'wp_get_current_user' )->justReturn( (object) array( 'roles' => array( 'editor' ) ) );
+		Functions\when( 'wp_get_current_user' )->justReturn(
+			new \WP_User(
+				array(
+					'ID'    => 5,
+					'roles' => array( 'editor' ),
+				)
+			)
+		);
 
 		$this->assertNull(
 			Factory::create(
@@ -93,7 +100,7 @@ final class FactoryTest extends TestCase {
 
 	public function test_super_admins_excluded_on_multisite_only(): void {
 		Functions\when( 'is_user_logged_in' )->justReturn( true );
-		Functions\when( 'wp_get_current_user' )->justReturn( (object) array( 'roles' => array() ) );
+		Functions\when( 'wp_get_current_user' )->justReturn( new \WP_User( array( 'ID' => 1 ) ) );
 		Functions\when( 'is_super_admin' )->justReturn( true );
 		$options = $this->options(
 			array(
@@ -120,7 +127,7 @@ final class FactoryTest extends TestCase {
 	}
 
 	public function test_exclusion_filter(): void {
-		Filters\expectApplied( 'gainwp_exclude_tracking' )->once()->with( false )->andReturn( true );
+		Filters\expectApplied( 'gainwp_exclude_tracking' )->once()->with( false, 'page' )->andReturn( true );
 		$this->assertNull( Factory::create( $this->options( array( 'measurement_id' => 'G-TEST1234' ) ) ) );
 	}
 }

@@ -65,28 +65,32 @@ final class OptionsTest extends TestCase {
 		$values = Options::sanitize(
 			array(
 				'tracking_type'   => 'universal',
-				'author_format'   => 'email',
+				'content_group'   => 'author',
 				'consent_default' => 'granted',
 			)
 		);
 		$this->assertSame( 'gtag', $values['tracking_type'] );
-		$this->assertSame( 'display_name', $values['author_format'] );
+		$this->assertSame( 'none', $values['content_group'] );
 		$this->assertSame( 'none', $values['consent_default'] );
 	}
 
 	public function test_lists_keep_only_known_values(): void {
 		$values = Options::sanitize(
 			array(
-				'page_data' => array( 'author', 'bogus', 'tags' ),
+				'page_data' => array( 'content_author', 'author', 'content_tags' ),
 				'events'    => array(
 					'email' => '1',
 					'bogus' => '1',
 				),
 			)
 		);
-		$this->assertSame( array( 'author', 'tags' ), $values['page_data'] );
+		$this->assertSame( array( 'content_author', 'content_tags' ), $values['page_data'], '6.0 keys are dropped; Upgrade maps them.' );
 		$this->assertSame(
 			array(
+				'forms'      => false,
+				'login'      => false,
+				'sign_up'    => false,
+				'comments'   => false,
 				'email'      => true,
 				'phone'      => false,
 				'anchors'    => false,
@@ -171,5 +175,33 @@ final class OptionsTest extends TestCase {
 	public function test_corrupt_stored_value_returns_defaults(): void {
 		$this->wp_options[ Options::OPTION ] = 'not an array';
 		$this->assertSame( Options::defaults(), ( new Options() )->all() );
+	}
+
+	/**
+	 * @dataProvider money_inputs
+	 *
+	 * @param mixed      $input    Raw amount.
+	 * @param float|null $expected Parsed amount.
+	 */
+	public function test_money_amounts( $input, ?float $expected ): void {
+		$this->assertSame( $expected, Options::money( $input ) );
+	}
+
+	/**
+	 * @return array<string, array{0: mixed, 1: float|null}>
+	 */
+	public function money_inputs(): array {
+		return array(
+			'number'              => array( 100, 100.0 ),
+			'dollars'             => array( '$1,250.50', 1250.5 ),
+			'comma cents'         => array( '12,50', 12.5 ),
+			'european thousands'  => array( '1.250,50 €', 1250.5 ),
+			'thousands separator' => array( '1,250', 1250.0 ),
+			'rounded to cents'    => array( '9.999', 10.0 ),
+			'empty'               => array( '', null ),
+			'negative'            => array( '-5', null ),
+			'text'                => array( 'a lot', null ),
+			'null'                => array( null, null ),
+		);
 	}
 }

@@ -20,13 +20,62 @@ final class Options {
 
 	public const TRACKING_TYPES = array( 'gtag', 'tagmanager', 'disabled' );
 
-	public const PAGE_DATA_KEYS = array( 'author', 'category', 'tags', 'publish_year', 'publish_month', 'user_type' );
+	/**
+	 * Page attributes, named as the GA4 event parameters they are sent as.
+	 */
+	public const PAGE_DATA_KEYS = array( 'content_type', 'content_id', 'content_author', 'content_category', 'content_tags', 'content_publish_month', 'user_status' );
 
-	public const AUTHOR_FORMATS = array( 'display_name', 'user_login' );
+	/**
+	 * What fills GA4's built-in content_group parameter.
+	 */
+	public const CONTENT_GROUPS = array( 'none', 'post_type', 'category' );
 
-	public const EVENT_KEYS = array( 'email', 'phone', 'anchors', 'affiliates', 'scroll' );
+	public const EVENT_KEYS = array( 'forms', 'login', 'sign_up', 'comments', 'email', 'phone', 'anchors', 'affiliates', 'scroll' );
 
 	public const CONSENT_MODES = array( 'none', 'denied', 'denied_eea' );
+
+	/**
+	 * Events a site can make a goal. Goals send `value` and `currency` when
+	 * they have a value, and the setup checklist marks them as key events.
+	 * Nothing else sends a value from settings.
+	 */
+	public const GOAL_EVENTS = array( 'generate_lead', 'sign_up', 'form_complete', 'comment_submit', 'email_link_click', 'phone_link_click', 'affiliate_link_click' );
+
+	/**
+	 * Every event GAinWP sends.
+	 */
+	public const EVENT_NAMES = array( 'generate_lead', 'sign_up', 'login', 'form_complete', 'comment_submit', 'email_link_click', 'phone_link_click', 'affiliate_link_click', 'anchor_link_click', 'scroll_depth' );
+
+	/**
+	 * GAinWP 6.0's page attribute keys and their 6.1 names. The publication
+	 * year became part of the month.
+	 */
+	public const RENAMED_6_0 = array(
+		'author'        => 'content_author',
+		'category'      => 'content_category',
+		'tags'          => 'content_tags',
+		'publish_year'  => 'content_publish_month',
+		'publish_month' => 'content_publish_month',
+		'user_type'     => 'user_status',
+	);
+
+	/**
+	 * What a form's successful submission sends: a completed form, a lead,
+	 * a sign-up, or nothing.
+	 */
+	public const FORM_EVENTS = array( 'form_complete', 'generate_lead', 'sign_up', 'off' );
+
+	/**
+	 * What a form sends until the owner chooses. Not generate_lead, so a
+	 * newsletter or search form never counts as a lead, and turning form
+	 * tracking on never duplicates leads a site already sends some other way.
+	 */
+	public const DEFAULT_FORM_EVENT = 'form_complete';
+
+	/**
+	 * Form component IDs: form:{provider}:{form ID}.
+	 */
+	public const FORM_ID_PATTERN = '/^form:[a-z0-9_-]{1,40}:[A-Za-z0-9_.-]{1,64}$/';
 
 	public const MEASUREMENT_ID_PATTERN = '/^G-[A-Z0-9]{4,20}$/';
 
@@ -58,9 +107,18 @@ final class Options {
 			'gtm_amp_container_id' => '',
 			'in_footer'            => false,
 			'page_data'            => array(),
-			'author_format'        => 'display_name',
+			'content_group'        => 'none',
 			'events'               => array_fill_keys( self::EVENT_KEYS, false ),
 			'affiliate_links'      => array( '/out/' ),
+			'currency'             => 'USD',
+			'goals'                => array_fill_keys(
+				self::GOAL_EVENTS,
+				array(
+					'goal'  => false,
+					'value' => null,
+				)
+			),
+			'forms'                => array(),
 			'consent_default'      => 'none',
 			'respect_dnt'          => false,
 			'allow_optout'         => false,
@@ -123,6 +181,66 @@ final class Options {
 	}
 
 	/**
+	 * The value a goal sends, or null when the event isn't a goal or the
+	 * goal has no value.
+	 *
+	 * @param string $event Event name.
+	 */
+	public function goal_value( string $event ): ?float {
+		$goal = $this->get( 'goals' )[ $event ] ?? null;
+		return is_array( $goal ) && $goal['goal'] ? $goal['value'] : null;
+	}
+
+	/**
+	 * Whether an event is a goal.
+	 *
+	 * @param string $event Event name.
+	 */
+	public function is_goal( string $event ): bool {
+		return ! empty( $this->get( 'goals' )[ $event ]['goal'] );
+	}
+
+	/**
+	 * The component ID of a form plugin's form, e.g. form:gravityforms:3,
+	 * or '' when the provider or ID can't be used in one.
+	 *
+	 * @param string     $provider Form plugin slug.
+	 * @param int|string $form_id  The plugin's form ID.
+	 */
+	public static function form_id( string $provider, $form_id ): string {
+		$component_id = 'form:' . $provider . ':' . $form_id;
+		return preg_match( self::FORM_ID_PATTERN, $component_id ) ? $component_id : '';
+	}
+
+	/**
+	 * A form's settings: the event it sends and its own goal value.
+	 *
+	 * @param string $component_id Form component ID, e.g. form:gravityforms:3.
+	 * @return array{event: string, value: float|null}
+	 */
+	public function form( string $component_id ): array {
+		return $this->get( 'forms' )[ $component_id ] ?? array(
+			'event' => self::DEFAULT_FORM_EVENT,
+			'value' => null,
+		);
+	}
+
+	/**
+	 * Every goal with its value (null for goals without one).
+	 *
+	 * @return array<string, float|null>
+	 */
+	public function goal_values(): array {
+		$values = array();
+		foreach ( $this->get( 'goals' ) as $event => $goal ) {
+			if ( $goal['goal'] ) {
+				$values[ $event ] = $goal['value'];
+			}
+		}
+		return $values;
+	}
+
+	/**
 	 * Sanitizes and stores settings.
 	 *
 	 * @param array<string, mixed> $values Settings to store.
@@ -159,7 +277,7 @@ final class Options {
 		$out['in_footer'] = ! empty( $input['in_footer'] );
 
 		$out['page_data']     = array_values( array_intersect( self::PAGE_DATA_KEYS, (array) ( $input['page_data'] ?? array() ) ) );
-		$out['author_format'] = self::one_of( $input['author_format'] ?? null, self::AUTHOR_FORMATS, $defaults['author_format'] );
+		$out['content_group'] = self::one_of( $input['content_group'] ?? null, self::CONTENT_GROUPS, $defaults['content_group'] );
 
 		$events        = (array) ( $input['events'] ?? array() );
 		$out['events'] = array();
@@ -170,6 +288,31 @@ final class Options {
 		$out['affiliate_links'] = self::url_fragments( $input['affiliate_links'] ?? array() );
 		if ( ! $out['affiliate_links'] ) {
 			$out['affiliate_links'] = $defaults['affiliate_links'];
+		}
+
+		$currency        = strtoupper( trim( (string) ( $input['currency'] ?? '' ) ) );
+		$out['currency'] = preg_match( '/^[A-Z]{3}$/', $currency ) ? $currency : $defaults['currency'];
+
+		$goals        = (array) ( $input['goals'] ?? array() );
+		$out['goals'] = array();
+		foreach ( self::GOAL_EVENTS as $event ) {
+			$goal                   = (array) ( $goals[ $event ] ?? array() );
+			$out['goals'][ $event ] = array(
+				'goal'  => ! empty( $goal['goal'] ),
+				'value' => self::money( $goal['value'] ?? null ),
+			);
+		}
+
+		$out['forms'] = array();
+		foreach ( (array) ( $input['forms'] ?? array() ) as $component_id => $form ) {
+			if ( ! is_string( $component_id ) || ! preg_match( self::FORM_ID_PATTERN, $component_id ) ) {
+				continue;
+			}
+			$form                          = (array) $form;
+			$out['forms'][ $component_id ] = array(
+				'event' => self::one_of( $form['event'] ?? null, self::FORM_EVENTS, self::DEFAULT_FORM_EVENT ),
+				'value' => self::money( $form['value'] ?? null ),
+			);
 		}
 
 		$out['consent_default'] = self::one_of( $input['consent_default'] ?? null, self::CONSENT_MODES, $defaults['consent_default'] );
@@ -198,6 +341,30 @@ final class Options {
 	public static function match_id( $value, string $pattern ): string {
 		$id = strtoupper( trim( (string) $value ) );
 		return preg_match( $pattern, $id ) ? $id : '';
+	}
+
+	/**
+	 * Parses a money amount: a number of at least 0, rounded to cents, or
+	 * null when empty or invalid. Accepts currency symbols and a comma
+	 * before the cents: "$1,250.50", "12,50", "1250,50", "1.250,50". A dot
+	 * is otherwise a decimal point, so "1.250" is 1.25.
+	 *
+	 * @param mixed $value Raw amount.
+	 */
+	public static function money( $value ): ?float {
+		if ( is_string( $value ) ) {
+			$value = (string) preg_replace( '/[^\d.,-]/', '', $value );
+			if ( preg_match( '/^(\d+|\d{1,3}(\.\d{3})+),\d{1,2}$/', $value ) ) {
+				// A comma before the cents: "12,50" or "1.250,50".
+				$value = str_replace( array( '.', ',' ), array( '', '.' ), $value );
+			} else {
+				$value = str_replace( ',', '', $value );
+			}
+		}
+		if ( ! is_numeric( $value ) || (float) $value < 0 ) {
+			return null;
+		}
+		return round( (float) $value, 2 );
 	}
 
 	/**

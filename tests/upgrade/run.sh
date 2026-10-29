@@ -85,7 +85,8 @@ has() { grep -q -- "$2" <<<"$1" && echo yes || echo no; }
 
 install_546() {
 	wp_env clean development
-	wp plugin install ga-in --version=5.4.6 --force --activate >/dev/null
+	# A zip URL, not --version: wp-env takes --version as its own option.
+	wp plugin install https://downloads.wordpress.org/plugin/ga-in.5.4.6.zip --force --activate >/dev/null
 	check "5.4.6 installed from wordpress.org" "$(wp plugin get ga-in --field=version)" "5.4.6"
 }
 
@@ -142,8 +143,8 @@ check "UA tag gone" "$(contains "$HOME_HTML" 'UA-12345-1')" "0"
 php_checks check-migrated-gtag.php
 wp option patch update gainwp_settings measurement_id G-UPGRADE1 >/dev/null
 POST_HTML=$(page '/?p=1')
-check "GA4 tag after entering the ID" "$(contains "$POST_HTML" 'gtag("config", "G-UPGRADE1")')" "1"
-check "page attributes sent" "$(contains "$POST_HTML" '"post_author":"admin"')" "1"
+check "GA4 tag after entering the ID" "$(contains "$POST_HTML" 'gtag("config", "G-UPGRADE1", {')" "1"
+check "page attributes sent with config" "$(contains "$POST_HTML" '"content_author":"admin"')" "1"
 check "gtag.js waits for the opt-out check" "$(contains "$POST_HTML" 'if (!window.gainwpOptOut)')" "1"
 check "opt-out handler loaded" "$(contains "$POST_HTML" 'assets/js/optout.js')" "1"
 check "events configured" "$(contains "$POST_HTML" '"affiliates":\["/go/","/recommends/"\]')" "1"
@@ -161,6 +162,7 @@ check "5.x outputs the container" "$(has "$(page /)" 'GTM-ABC1234')" "yes"
 update_to_build
 POST_HTML=$(page '/?p=1')
 check "container still loads with no action needed" "$(contains "$POST_HTML" '"GTM-ABC1234"')" "1"
-check "5.x data layer names kept" "$(contains "$POST_HTML" '{"gainwpAuthor":"admin","gainwpUser":"guest"}')" "1"
+check "5.x data layer names kept" "$(contains "$POST_HTML" '"gainwpAuthor":"admin","gainwpUser":"guest"')" "1"
+check "parameter names in the data layer" "$(contains "$POST_HTML" '{"content_author":"admin","user_status":"guest"')" "1"
 check_js "$POST_HTML" gainwp-gtm
 check_php_log "Tag Manager site"

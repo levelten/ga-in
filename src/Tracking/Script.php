@@ -18,6 +18,11 @@ final class Script {
 	public const GTAG_STUB = 'window.dataLayer = window.dataLayer || [];' . "\n" . 'function gtag(){dataLayer.push(arguments);}';
 
 	/**
+	 * Queues gainwp.track() calls made before assets/js/events.js loads.
+	 */
+	public const API_STUB = 'window.gainwp = window.gainwp || {}; window.gainwp.q = window.gainwp.q || []; window.gainwp.track = window.gainwp.track || function () { window.gainwp.q.push(arguments); };';
+
+	/**
 	 * Encodes a value for use inside an inline <script>.
 	 *
 	 * Escapes "<" and ">" so values can't close the script element.

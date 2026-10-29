@@ -6,3 +6,5 @@ parameters:
 		- src
 	bootstrapFiles:
 		- tests/phpstan-bootstrap.php
+	scanFiles:
+		- tests/phpstan-stubs.php
