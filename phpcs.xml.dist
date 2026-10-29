@@ -43,4 +43,8 @@
 	<rule ref="Generic.Commenting.DocComment.MissingShort">
 		<exclude-pattern>/tests/*</exclude-pattern>
 	</rule>
+	<!-- Stand-ins for other plugins' classes exist twice: once for PHPStan, once for the unit tests. -->
+	<rule ref="Generic.Classes.DuplicateClassName">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
 </ruleset>
