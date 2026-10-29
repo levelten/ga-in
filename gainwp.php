@@ -2,8 +2,8 @@
 /**
  * Plugin Name:       GAinWP Google Analytics Integration for WP
  * Plugin URI:        https://wordpress.org/plugins/ga-in/
- * Description:       Adds Google Analytics 4 or Google Tag Manager to your site, with consent mode, privacy controls and extra engagement events.
- * Version:           6.0.0
+ * Description:       Google Analytics 4 or Google Tag Manager for WordPress, with form lead tracking, goal values, GA4's own event names and a setup checklist.
+ * Version:           6.1.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            IntelligenceWP
@@ -40,7 +40,7 @@ if ( version_compare( PHP_VERSION, '7.4', '<' ) ) {
 	return;
 }
 
-define( 'GAINWP_VERSION', '6.0.0' );
+define( 'GAINWP_VERSION', '6.1.0' );
 define( 'GAINWP_FILE', __FILE__ );
 
 /**

@@ -12,13 +12,18 @@ global $wpdb;
 $gainwp_settings = (array) get_option( 'gainwp_settings' );
 $gainwp_backup   = (array) get_option( 'gainwp_legacy_options' );
 
-gainwp_check( 'settings format version', (int) get_option( 'gainwp_db_version' ), 2 );
+gainwp_check( 'settings format version', (int) get_option( 'gainwp_db_version' ), 3 );
 gainwp_check( 'tracking type', $gainwp_settings['tracking_type'] ?? null, 'gtag' );
 gainwp_check( 'UA ID not carried over', $gainwp_settings['measurement_id'] ?? null, '' );
 gainwp_check(
 	'events',
 	$gainwp_settings['events'] ?? null,
 	array(
+		// New in 6.1: forms on (they send form_complete), the rest off.
+		'forms'      => true,
+		'login'      => false,
+		'sign_up'    => false,
+		'comments'   => false,
 		'email'      => true,
 		'phone'      => true,
 		'anchors'    => false,
@@ -26,8 +31,9 @@ gainwp_check(
 		'scroll'     => true,
 	)
 );
+gainwp_check( 'leads and sign-ups are goals', array_keys( ( new \GAinWP\Options() )->goal_values() ), array( 'generate_lead', 'sign_up' ) );
 gainwp_check( 'affiliate regex converted', $gainwp_settings['affiliate_links'] ?? null, array( '/go/', '/recommends/' ) );
-gainwp_check( 'custom dimensions became page attributes', $gainwp_settings['page_data'] ?? null, array( 'author', 'category' ) );
+gainwp_check( 'custom dimensions became page attributes', $gainwp_settings['page_data'] ?? null, array( 'content_author', 'content_category' ) );
 gainwp_check( 'Do Not Track kept', $gainwp_settings['respect_dnt'] ?? null, true );
 gainwp_check( 'opt-out kept', $gainwp_settings['allow_optout'] ?? null, true );
 gainwp_check( 'excluded roles kept', $gainwp_settings['exclude_roles'] ?? null, array( 'administrator' ) );

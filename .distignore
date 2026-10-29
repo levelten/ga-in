@@ -11,6 +11,7 @@
 .gitattributes
 .gitignore
 .wp-env.json
+.wp-env.override.json
 .phpunit.result.cache
 .DS_Store
 composer.json

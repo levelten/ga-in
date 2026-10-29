@@ -41,6 +41,7 @@ abstract class TestCase extends PHPUnitTestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
+		\WPCF7_ContactForm::$forms = array();
 
 		Functions\stubTranslationFunctions();
 		Functions\stubEscapeFunctions();

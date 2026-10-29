@@ -57,10 +57,26 @@ final class UpgradeTest extends TestCase {
 		$this->assertSame( 'gtag', $settings['tracking_type'] );
 		$this->assertSame( '', $settings['measurement_id'], 'UA IDs cannot be used with GA4.' );
 		$this->assertTrue( $settings['in_footer'] );
-		$this->assertSame( array( 'author', 'category', 'publish_year', 'user_type' ), $settings['page_data'] );
-		$this->assertSame( 'display_name', $settings['author_format'] );
+		$this->assertSame( array( 'content_author', 'content_category', 'content_publish_month', 'user_status' ), $settings['page_data'], 'The publication year becomes the month.' );
+		$this->assertArrayNotHasKey( 'author_format', $settings );
+		$this->assertSame(
+			array( 'generate_lead', 'sign_up' ),
+			array_keys(
+				array_filter(
+					$settings['goals'],
+					static function ( $goal ) {
+						return $goal['goal'];
+					}
+				)
+			),
+			'Leads and sign-ups are goals, as on 6.0 upgrades.'
+		);
 		$this->assertSame(
 			array(
+				'forms'      => true,
+				'login'      => false,
+				'sign_up'    => false,
+				'comments'   => false,
 				'email'      => true,
 				'phone'      => true,
 				'anchors'    => false,
@@ -140,8 +156,7 @@ final class UpgradeTest extends TestCase {
 		$this->assertSame( 'tagmanager', $settings['tracking_type'] );
 		$this->assertSame( 'GTM-ABC123', $settings['gtm_container_id'] );
 		$this->assertSame( 'GTM-AMP123', $settings['gtm_amp_container_id'] );
-		$this->assertSame( array( 'author', 'tags' ), $settings['page_data'], 'Only data layer switches apply in Tag Manager mode.' );
-		$this->assertSame( 'user_login', $settings['author_format'] );
+		$this->assertSame( array( 'content_author', 'content_tags' ), $settings['page_data'], 'Only data layer switches apply in Tag Manager mode; usernames become display names.' );
 		$this->assertTrue( $settings['allow_optout'] );
 	}
 
@@ -214,15 +229,59 @@ final class UpgradeTest extends TestCase {
 
 		Upgrade::run();
 
-		$this->assertSame( array( 'measurement_id' => 'G-KEEP1234' ), $this->wp_options[ Options::OPTION ] );
+		$this->assertSame( 'G-KEEP1234', $this->wp_options[ Options::OPTION ]['measurement_id'] );
+		$this->assertSame( array(), $this->wp_options[ Options::OPTION ]['page_data'] );
 		$this->assertArrayNotHasKey( 'gainwp_options', $this->wp_options );
 	}
 
-	public function test_fresh_install_only_records_version(): void {
+	public function test_fresh_install_gets_recommended_settings(): void {
 		Upgrade::maybe_run();
 
-		$this->assertSame( array( Upgrade::VERSION_OPTION => Upgrade::DB_VERSION ), $this->wp_options );
+		$settings = $this->wp_options[ Options::OPTION ];
+		$this->assertSame( Options::sanitize( Upgrade::recommended() ), $settings );
+		$this->assertSame( array( 'content_type', 'content_id', 'content_author', 'content_category', 'content_publish_month', 'user_status' ), $settings['page_data'] );
+		$this->assertTrue( $settings['events']['email'] );
+		$this->assertFalse( $settings['events']['anchors'] );
+		$this->assertSame( Upgrade::DB_VERSION, $this->wp_options[ Upgrade::VERSION_OPTION ] );
 		$this->assertSame( array(), $this->queries );
+	}
+
+	public function test_6_0_settings_are_renamed_and_only_forms_turn_on(): void {
+		$stored                                      = array(
+			'measurement_id' => 'G-KEEP1234',
+			'page_data'      => array( 'author', 'publish_year', 'publish_month', 'tags', 'user_type' ),
+			'author_format'  => 'user_login',
+			'events'         => array( 'scroll' => true ),
+		);
+		$this->wp_options[ Options::OPTION ]         = $stored;
+		$this->wp_options[ Upgrade::VERSION_OPTION ] = 2;
+
+		Upgrade::maybe_run();
+
+		$settings = $this->wp_options[ Options::OPTION ];
+		$this->assertSame( array( 'content_author', 'content_tags', 'content_publish_month', 'user_status' ), $settings['page_data'] );
+		$this->assertArrayNotHasKey( 'author_format', $settings );
+		$this->assertSame( array( 'forms', 'scroll' ), array_keys( array_filter( $settings['events'] ) ), 'Forms send form_complete from the upgrade on; other new events start off.' );
+		$this->assertSame( 'form_complete', ( new Options() )->form( 'form:gravityforms:1' )['event'] );
+		$this->assertSame( 'none', $settings['content_group'] );
+		$this->assertSame( array( 'generate_lead', 'sign_up' ), array_keys( ( new Options() )->goal_values() ) );
+	}
+
+	public function test_6_1_settings_pass_through_the_6_0_mapping(): void {
+		$settings = array(
+			'page_data' => array( 'content_type', 'user_status' ),
+			'events'    => array( 'forms' => false ),
+			'goals'     => array(),
+		);
+		$this->assertSame( $settings, Upgrade::from_6_0( $settings ), 'Form tracking turned off stays off.' );
+	}
+
+	public function test_6_0_site_that_never_saved_gets_recommended_settings(): void {
+		$this->wp_options[ Upgrade::VERSION_OPTION ] = 2;
+
+		Upgrade::maybe_run();
+
+		$this->assertSame( Options::sanitize( Upgrade::recommended() ), $this->wp_options[ Options::OPTION ] );
 	}
 
 	public function test_current_version_skips_upgrade(): void {
@@ -239,7 +298,7 @@ final class UpgradeTest extends TestCase {
 
 		Upgrade::run();
 
-		$this->assertArrayNotHasKey( Options::OPTION, $this->wp_options );
+		$this->assertSame( Options::sanitize( Upgrade::recommended() ), $this->wp_options[ Options::OPTION ], 'Treated as a new install.' );
 		$this->assertSame( Upgrade::DB_VERSION, $this->wp_options[ Upgrade::VERSION_OPTION ] );
 	}
 

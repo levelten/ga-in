@@ -8,29 +8,47 @@
 namespace GAinWP;
 
 /**
- * Migrates GAinWP 5.x (Universal Analytics) settings to the 6.x format.
+ * Migrates settings from earlier versions and sets up new installs.
  *
  * 5.x stored JSON in `gainwp_options` (and `gainwp_network_options` on
  * multisite), along with OAuth tokens and cached report data. 6.x keeps an
  * array in `gainwp_settings`. A credential-free copy of the old settings is
  * kept in `gainwp_legacy_options` in case a mapping needs revisiting.
+ *
+ * New features start off on existing sites, except form tracking: its
+ * default event, form_complete, is one no other tool sends, so it can't
+ * double-count leads a site already tracks. New installs get the
+ * recommended settings.
  */
 final class Upgrade {
 
 	/**
-	 * Settings format version. 5.x had none; 2 is the 6.0 format.
+	 * Settings format version. 5.x had none; 2 is the 6.0 format, 3 the 6.1 format.
 	 */
-	public const DB_VERSION = 2;
+	public const DB_VERSION = 3;
 
 	public const VERSION_OPTION = 'gainwp_db_version';
 
 	public const LEGACY_BACKUP_OPTION = 'gainwp_legacy_options';
 
 	/**
+	 * Goals on new installs and sites upgrading from 6.0 or 5.x.
+	 */
+	private const DEFAULT_GOALS = array(
+		'generate_lead' => array( 'goal' => true ),
+		'sign_up'       => array( 'goal' => true ),
+	);
+
+	/**
 	 * Settings the migration couldn't carry over, shown on the settings
 	 * screen until the settings are next saved.
 	 */
 	public const WARNINGS_OPTION = 'gainwp_upgrade_warnings';
+
+	/**
+	 * Set when an existing site updates to 6.1, for the "what's new" notice.
+	 */
+	public const WHATS_NEW_OPTION = 'gainwp_whats_new';
 
 	/**
 	 * 5.x site options, all removed after migration and on uninstall.
@@ -53,10 +71,12 @@ final class Upgrade {
 	}
 
 	/**
-	 * Converts legacy settings (if any) and retires the legacy data.
+	 * Converts earlier settings, or stores the recommended settings on new
+	 * installs, and retires 5.x data.
 	 */
 	public static function run(): void {
-		$legacy = self::decode( get_option( 'gainwp_options' ) );
+		$version = (int) get_option( self::VERSION_OPTION, 0 );
+		$legacy  = self::decode( get_option( 'gainwp_options' ) );
 
 		if ( null !== $legacy ) {
 			if ( false === get_option( Options::OPTION ) ) {
@@ -70,11 +90,74 @@ final class Upgrade {
 			self::retire_legacy( $legacy );
 		}
 
+		$stored = get_option( Options::OPTION );
+		if ( ! is_array( $stored ) ) {
+			// New installs, and 6.0 sites that never saved their settings.
+			update_option( Options::OPTION, Options::sanitize( self::recommended() ) );
+		} elseif ( $version < 3 ) {
+			update_option( Options::OPTION, Options::sanitize( self::from_6_0( $stored ) ) );
+			// The version the site updated from: 6.0, or 5.x.
+			update_option( self::WHATS_NEW_OPTION, 2 === $version ? '6.0' : '5', false );
+		}
+
 		update_option( self::VERSION_OPTION, self::DB_VERSION );
 	}
 
 	/**
-	 * Maps 5.x settings to 6.x settings.
+	 * Settings for new installs. Booleans left out stay off.
+	 *
+	 * @return array<string, mixed> Unsanitized settings.
+	 */
+	public static function recommended(): array {
+		return array(
+			// Tags can be long and are mostly noise in reports.
+			'page_data' => array_values( array_diff( Options::PAGE_DATA_KEYS, array( 'content_tags' ) ) ),
+			'events'    => array(
+				'forms'    => true,
+				'login'    => true,
+				'sign_up'  => true,
+				'comments' => true,
+				'email'    => true,
+				'phone'    => true,
+				'scroll'   => true,
+			),
+			'goals'     => self::DEFAULT_GOALS,
+		);
+	}
+
+	/**
+	 * Maps 6.0 settings to the 6.1 format. Settings already in the 6.1
+	 * format (such as converted 5.x settings) pass through unchanged.
+	 *
+	 * @param array<string, mixed> $settings Stored settings.
+	 * @return array<string, mixed> Unsanitized settings.
+	 */
+	public static function from_6_0( array $settings ): array {
+		$page_data = array();
+		foreach ( (array) ( $settings['page_data'] ?? array() ) as $key ) {
+			$page_data[] = Options::RENAMED_6_0[ $key ] ?? $key;
+		}
+		$settings['page_data'] = array_values( array_unique( $page_data ) );
+
+		// Forms are tracked from the upgrade on. They send form_complete,
+		// which no other tool sends, until the owner sets lead forms to Lead,
+		// so existing lead tracking is never doubled. Other new events start
+		// off; leads and sign-ups are goals once they're sent.
+		$events = (array) ( $settings['events'] ?? array() );
+		if ( ! isset( $events['forms'] ) ) {
+			$settings['events'] = array( 'forms' => true ) + $events;
+		}
+		if ( ! isset( $settings['goals'] ) ) {
+			$settings['goals'] = self::DEFAULT_GOALS;
+		}
+
+		// author_format is gone: authors are always sent as their display
+		// name. Options::sanitize() drops the key.
+		return $settings;
+	}
+
+	/**
+	 * Maps 5.x settings to 6.1 settings.
 	 *
 	 * Universal Analytics IDs are not carried over: UA stopped processing
 	 * data in July 2023 and GA4 needs a new Measurement ID.
@@ -94,22 +177,22 @@ final class Upgrade {
 
 		// 5.x kept separate custom dimension (gtag) and data layer (GTM)
 		// switches for the same page data. Use whichever mode was active.
+		// Authors are sent as display names even where 5.x sent usernames, and
+		// the publication year is part of the month.
 		$page_data_sources = $tag_manager
 			? array(
-				'author'        => array( 'tm_author_var', 'tm_author_login_var' ),
-				'category'      => array( 'tm_category_var' ),
-				'tags'          => array( 'tm_tag_var' ),
-				'publish_year'  => array( 'tm_pubyear_var' ),
-				'publish_month' => array( 'tm_pubyearmonth_var' ),
-				'user_type'     => array( 'tm_user_var' ),
+				'content_author'        => array( 'tm_author_var', 'tm_author_login_var' ),
+				'content_category'      => array( 'tm_category_var' ),
+				'content_tags'          => array( 'tm_tag_var' ),
+				'content_publish_month' => array( 'tm_pubyear_var', 'tm_pubyearmonth_var' ),
+				'user_status'           => array( 'tm_user_var' ),
 			)
 			: array(
-				'author'        => array( 'ga_author_dimindex', 'ga_author_login_dimindex' ),
-				'category'      => array( 'ga_category_dimindex' ),
-				'tags'          => array( 'ga_tag_dimindex' ),
-				'publish_year'  => array( 'ga_pubyear_dimindex' ),
-				'publish_month' => array( 'ga_pubyearmonth_dimindex' ),
-				'user_type'     => array( 'ga_user_dimindex' ),
+				'content_author'        => array( 'ga_author_dimindex', 'ga_author_login_dimindex' ),
+				'content_category'      => array( 'ga_category_dimindex' ),
+				'content_tags'          => array( 'ga_tag_dimindex' ),
+				'content_publish_month' => array( 'ga_pubyear_dimindex', 'ga_pubyearmonth_dimindex' ),
+				'user_status'           => array( 'ga_user_dimindex' ),
 			);
 
 		$page_data = array();
@@ -121,11 +204,6 @@ final class Upgrade {
 				}
 			}
 		}
-
-		// 5.x preferred the display name when both author variants were on.
-		$display_key   = $tag_manager ? 'tm_author_var' : 'ga_author_dimindex';
-		$login_key     = $tag_manager ? 'tm_author_login_var' : 'ga_author_login_dimindex';
-		$author_format = ( $flag( $login_key ) && ! $flag( $display_key ) ) ? 'user_login' : 'display_name';
 
 		// In network mode 5.x let network settings override site settings.
 		$super_admins = ( ! empty( $network['network_mode'] ) && isset( $network['superadmin_tracking'] ) )
@@ -147,8 +225,9 @@ final class Upgrade {
 			'gtm_amp_container_id' => $flag( 'amp_tracking_tagmanager' ) ? ( $legacy['amp_containerid'] ?? '' ) : '',
 			'in_footer'            => $flag( 'trackingcode_infooter' ),
 			'page_data'            => $page_data,
-			'author_format'        => $author_format,
 			'events'               => array(
+				// As for 6.0 sites: forms send form_complete until set to Lead.
+				'forms'      => true,
 				// "Event tracking" covered downloads, outbound, email and phone
 				// links. GA4 Enhanced Measurement handles the first two.
 				'email'      => $flag( 'ga_event_tracking' ),
@@ -158,6 +237,7 @@ final class Upgrade {
 				'scroll'     => $flag( 'ga_pagescrolldepth_tracking' ),
 			),
 			'affiliate_links'      => $affiliate_links ?? array(),
+			'goals'                => self::DEFAULT_GOALS,
 			'respect_dnt'          => $flag( 'ga_dnt_optout' ) || $flag( 'tm_dnt_optout' ),
 			'allow_optout'         => $flag( 'ga_optout' ) || $flag( 'tm_optout' ),
 			'exclude_roles'        => $legacy['track_exclude'] ?? array(),

@@ -27,6 +27,13 @@ final class Plugin {
 	private Options $options;
 
 	/**
+	 * Server-side event recorder, created on first use.
+	 *
+	 * @var Events\Recorder|null
+	 */
+	private ?Events\Recorder $recorder = null;
+
+	/**
 	 * Returns the shared instance.
 	 */
 	public static function instance(): self {
@@ -53,6 +60,16 @@ final class Plugin {
 	}
 
 	/**
+	 * Returns the recorder for events that happen on the server.
+	 */
+	public function recorder(): Events\Recorder {
+		if ( null === $this->recorder ) {
+			$this->recorder = new Events\Recorder( $this->options, new Events\Queue() );
+		}
+		return $this->recorder;
+	}
+
+	/**
 	 * Registers hooks. Called once from the main plugin file.
 	 */
 	public function register(): void {
@@ -70,6 +87,14 @@ final class Plugin {
 		// Registered everywhere, including admin-ajax requests that render
 		// post content, so the shortcode never shows as raw text.
 		Tracking\OptOut::register_shortcode( $this->options );
+
+		// Logins, registrations, comments and form submissions happen on
+		// wp-login.php, admin-ajax.php and REST requests too.
+		if ( '' !== $this->options->tag_id() && ! wp_doing_cron() ) {
+			foreach ( Integrations\Registry::available( $this->options ) as $integration ) {
+				$integration->register( $this->recorder() );
+			}
+		}
 
 		if ( is_admin() ) {
 			( new Admin\SettingsPage( $this->options ) )->register();

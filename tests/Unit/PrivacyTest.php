@@ -45,8 +45,10 @@ final class PrivacyTest extends TestCase {
 		$this->assertMatchesRegularExpression( '/"region":\[[^\]]*"DE"[^\]]*"GB"[^\]]*"CH"\]/', $lines[1] );
 	}
 
-	public function test_optout_script_requires_a_feature(): void {
-		$this->assertSame( '', OptOut::script( $this->options( array( 'measurement_id' => 'G-TEST1234' ) ) ) );
+	public function test_optout_check_runs_without_any_feature_on(): void {
+		// Visitors who opted out stay opted out after the site turns opt-out off.
+		$script = OptOut::script( $this->options( array( 'measurement_id' => 'G-TEST1234' ) ) );
+		$this->assertStringEndsWith( '({"cookie":"gainwp_optout","flag":"gainwpOptOut","disableKey":"ga-disable-G-TEST1234","respectDnt":false,"optout":false});', $script );
 	}
 
 	public function test_optout_script_sets_google_flag_when_id_known(): void {

@@ -13,18 +13,6 @@ namespace GAinWP\Tracking;
 final class Gtag extends AbstractTracker {
 
 	/**
-	 * GA4 event parameter names for each page attribute.
-	 */
-	public const PARAMETERS = array(
-		'author'        => 'post_author',
-		'category'      => 'post_category',
-		'tags'          => 'post_tags',
-		'publish_year'  => 'publish_year',
-		'publish_month' => 'publish_month',
-		'user_type'     => 'user_type',
-	);
-
-	/**
 	 * Commands to output, in the shape used by GAinWP 5.x so existing
 	 * `gainwp_gtag_commands` callbacks keep working: each entry has
 	 * 'command', 'fields' (positional values) and 'fieldsobject' (parameters).
@@ -32,14 +20,6 @@ final class Gtag extends AbstractTracker {
 	 * @var array<int, array<string, mixed>>
 	 */
 	private array $commands = array();
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function register(): void {
-		parent::register();
-		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_events' ) );
-	}
 
 	/**
 	 * Returns the queued commands.
@@ -90,7 +70,7 @@ final class Gtag extends AbstractTracker {
 
 		Script::print_marker( 'Google Analytics 4' );
 
-		if ( ! OptOut::enabled( $this->options ) ) {
+		if ( ! OptOut::gates_loading( $this->options ) ) {
 			wp_print_script_tag(
 				array(
 					'src'   => esc_url_raw( $src ),
@@ -101,7 +81,7 @@ final class Gtag extends AbstractTracker {
 			return;
 		}
 
-		// Visitors who opted out don't load gtag.js at all, so no Google
+		// Visitors who opt out don't load gtag.js at all, so no Google
 		// destination linked to the tag (such as Ads) receives their data.
 		$loader = sprintf(
 			"if (!window.%s) {var gainwpTag = document.createElement('script'); gainwpTag.async = true; gainwpTag.src = %s; document.head.appendChild(gainwpTag);}",
@@ -135,28 +115,18 @@ final class Gtag extends AbstractTracker {
 	}
 
 	/**
-	 * Queues the config command, preceded by page attributes.
+	 * Queues the config command.
 	 */
 	private function build_commands(): void {
-		$this->commands = array();
-
-		$params = $this->page_data( self::PARAMETERS );
-		if ( $params ) {
-			// "set" applies the attributes to every event on the page, not just page_view.
-			$this->commands[] = array(
-				'command'      => 'set',
-				'fields'       => array(),
-				'fieldsobject' => $params,
-			);
-		}
-
-		$this->commands[] = array(
-			'command'      => 'config',
-			'fields'       => array( 'trackingId' => $this->options->get( 'measurement_id' ) ),
-			'fieldsobject' => $this->config(),
+		$this->commands = array(
+			array(
+				'command'      => 'config',
+				'fields'       => array( 'trackingId' => $this->options->get( 'measurement_id' ) ),
+				'fieldsobject' => $this->config(),
+			),
 		);
 
-		$before = $this->commands;
+		$before = $this->get();
 		do_action_deprecated( 'gainwp_gtag_commands', array( $this ), '6.0.0', 'gainwp_gtag_config' );
 		foreach ( $this->commands as $index => $command ) {
 			if ( ! in_array( $command, $before, true ) ) {
@@ -212,7 +182,9 @@ final class Gtag extends AbstractTracker {
 	}
 
 	/**
-	 * Builds the parameters for the config command.
+	 * Builds the parameters for the config command: cookie and linker
+	 * settings, then page attributes, which config applies to every event
+	 * on the page (Google recommends it over "set" for custom parameters).
 	 *
 	 * @return array<string, mixed>
 	 */
@@ -237,47 +209,10 @@ final class Gtag extends AbstractTracker {
 		 * @param array<string, mixed> $config Config parameters.
 		 * @param string               $id     GA4 Measurement ID.
 		 */
-		return (array) apply_filters( 'gainwp_gtag_config', $config, $this->options->get( 'measurement_id' ) );
-	}
+		$config = (array) apply_filters( 'gainwp_gtag_config', $config, $this->options->get( 'measurement_id' ) );
 
-	/**
-	 * Enqueues the event tracking script when any event is enabled.
-	 */
-	public function enqueue_events(): void {
-		$config = array();
-		foreach ( array( 'email', 'phone', 'anchors' ) as $event ) {
-			if ( $this->options->event_enabled( $event ) ) {
-				$config[ $event ] = true;
-			}
-		}
-		if ( $this->options->event_enabled( 'affiliates' ) ) {
-			$config['affiliates'] = $this->options->get( 'affiliate_links' );
-		}
-		if ( $this->options->event_enabled( 'scroll' ) ) {
-			/**
-			 * Filters the scroll depth percentages that send a scroll_depth event.
-			 *
-			 * @since 6.0.0
-			 *
-			 * @param array<int> $thresholds Percentages.
-			 */
-			$config['scroll'] = array_values( array_map( 'absint', (array) apply_filters( 'gainwp_scroll_thresholds', array( 25, 50, 75, 100 ) ) ) );
-		}
-
-		if ( ! $config ) {
-			return;
-		}
-
-		wp_enqueue_script(
-			'gainwp-events',
-			plugins_url( 'assets/js/events.js', GAINWP_FILE ),
-			array(),
-			GAINWP_VERSION,
-			array(
-				'in_footer' => true,
-				'strategy'  => 'defer',
-			)
-		);
-		wp_add_inline_script( 'gainwp-events', 'window.gainwpEvents = ' . Script::json( $config ) . ';', 'before' );
+		// Added after the filter, which predates them, so callbacks that
+		// return a new array don't drop them. Use gainwp_page_data to change them.
+		return $this->page_data() + $config;
 	}
 }

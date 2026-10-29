@@ -124,40 +124,41 @@ final class OptOut {
 	}
 
 	/**
-	 * Whether opt-out or Do Not Track handling is on.
+	 * Whether gtag.js waits for the opt-out check before loading: when
+	 * visitors can opt out or Do Not Track is respected. Otherwise it loads
+	 * from a plain script tag, and the check's `ga-disable-<ID>` flag still
+	 * stops GA4 for visitors who opted out earlier.
 	 *
 	 * @param Options $options Plugin settings.
 	 */
-	public static function enabled( Options $options ): bool {
+	public static function gates_loading( Options $options ): bool {
 		return (bool) $options->get( 'allow_optout' ) || (bool) $options->get( 'respect_dnt' );
 	}
 
 	/**
-	 * Returns the opt-out check, or '' when neither feature is on. Must run
-	 * before any Google tag loads, so trackers print it first.
+	 * Returns the opt-out check. Must run before any Google tag loads, so
+	 * trackers print it first.
 	 *
 	 * For visitors who opted out (or send DNT/GPC, when respected) it sets
 	 * window.gainwpOptOut, which stops gtag.js or the Tag Manager container
-	 * from loading, and Google's `ga-disable-<ID>` flag when a Measurement ID
-	 * is set. Opt-outs recorded by 5.x (`ga-disable-UA-...=true` cookies) are
-	 * honored too. When opt-out is on it also defines gaOptout() right away,
-	 * as 5.x did, for consent tools or scripts that call it while the page
-	 * loads; assets/js/optout.js reuses that definition.
+	 * from loading and GAinWP's events from being sent, and Google's
+	 * `ga-disable-<ID>` flag when a Measurement ID is set. Stored opt-outs,
+	 * including 5.x's `ga-disable-UA-...=true` cookies, are honored even
+	 * after the site turns the opt-out shortcode off: a visitor's choice
+	 * outlives the setting. When opt-out is on it also defines gaOptout()
+	 * right away, as 5.x did, for consent tools or scripts that call it
+	 * while the page loads; assets/js/optout.js reuses that definition.
 	 *
 	 * @param Options $options Plugin settings.
 	 */
 	public static function script( Options $options ): string {
-		if ( ! self::enabled( $options ) ) {
-			return '';
-		}
-
 		return implode(
 			"\n",
 			array(
 				'(function (s) {',
 				'var signal = navigator.doNotTrack === "1" || window.doNotTrack === "1" || navigator.globalPrivacyControl === true;',
 				'var cookies = "; " + document.cookie;',
-				'var optedOut = s.optout && (cookies.indexOf("; " + s.cookie + "=1") > -1 || /; ga-disable-UA-[^=;]*=true(;|$)/.test(cookies));',
+				'var optedOut = cookies.indexOf("; " + s.cookie + "=1") > -1 || /; ga-disable-UA-[^=;]*=true(;|$)/.test(cookies);',
 				'if ((s.respectDnt && signal) || optedOut) {',
 				'window[s.flag] = true;',
 				'if (s.disableKey) { window[s.disableKey] = true; }',

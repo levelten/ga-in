@@ -10,21 +10,20 @@ namespace GAinWP\Tracking;
 /**
  * Outputs a Google Tag Manager container and data layer variables.
  *
- * Variable names and values match GAinWP 5.x so existing GTM containers
- * keep working.
+ * Page attributes are pushed under their GA4 parameter names and, so
+ * existing containers keep working, under GAinWP 5.x's variable names.
  */
 final class TagManager extends AbstractTracker {
 
 	/**
-	 * Data layer variable names for each page attribute.
+	 * GAinWP 5.x data layer variable names for page attributes.
 	 */
-	public const VARIABLES = array(
-		'author'        => 'gainwpAuthor',
-		'category'      => 'gainwpCategory',
-		'tags'          => 'gainwpTag',
-		'publish_year'  => 'gainwpPublicationYear',
-		'publish_month' => 'gainwpPublicationYearMonth',
-		'user_type'     => 'gainwpUser',
+	public const LEGACY_VARIABLES = array(
+		'content_author'        => 'gainwpAuthor',
+		'content_category'      => 'gainwpCategory',
+		'content_tags'          => 'gainwpTag',
+		'content_publish_month' => 'gainwpPublicationYearMonth',
+		'user_status'           => 'gainwpUser',
 	);
 
 	/**
@@ -80,10 +79,9 @@ final class TagManager extends AbstractTracker {
 	public function inline_script(): string {
 		$this->build_datalayer();
 
-		$privacy = $this->privacy_in_output() ? $this->privacy_script() : '';
-		$lines   = array(
-			'' !== $privacy ? Script::GTAG_STUB : 'window.dataLayer = window.dataLayer || [];',
-			$privacy,
+		$lines = array(
+			$this->script_start(),
+			$this->privacy_in_output() ? $this->privacy_script() : '',
 		);
 		if ( $this->datalayer ) {
 			$lines[] = 'window.dataLayer.push(' . Script::json( $this->datalayer ) . ');';
@@ -95,7 +93,7 @@ final class TagManager extends AbstractTracker {
 		);
 		// Without a Measurement ID there is no Google flag to set, so visitors
 		// who opted out don't get the container at all.
-		$lines[] = OptOut::enabled( $this->options ) ? 'if (!window.' . OptOut::FLAG . ') {' . $loader . '}' : $loader;
+		$lines[] = 'if (!window.' . OptOut::FLAG . ') {' . $loader . '}';
 
 		return implode( "\n", array_filter( $lines ) );
 	}
@@ -114,7 +112,15 @@ final class TagManager extends AbstractTracker {
 	 * Collects page attributes into data layer variables.
 	 */
 	private function build_datalayer(): void {
-		$this->datalayer = $this->page_data( self::VARIABLES );
+		$this->datalayer = $this->page_data();
+		foreach ( self::LEGACY_VARIABLES as $key => $variable ) {
+			if ( isset( $this->datalayer[ $key ] ) ) {
+				$this->datalayer[ $variable ] = $this->datalayer[ $key ];
+			}
+		}
+		if ( isset( $this->datalayer['content_publish_month'] ) ) {
+			$this->datalayer['gainwpPublicationYear'] = substr( $this->datalayer['content_publish_month'], 0, 4 );
+		}
 
 		/**
 		 * Fires after the data layer variables are built.
